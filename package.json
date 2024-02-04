@@ -36,6 +36,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@fontsource/fira-mono": "^5.0.8",
 		"monaco-editor": "^0.45.0"
 	}
 }

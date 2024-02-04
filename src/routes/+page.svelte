@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte";
 	import type * as Monaco from "monaco-editor/esm/vs/editor/editor.api";
+	import Editor from "./Editor.svelte";
 
 	let editor: Monaco.editor.IStandaloneCodeEditor;
 	let monaco: typeof Monaco;
@@ -94,86 +95,50 @@
 </svelte:head>
 
 <section>
-	<div class="container">
-		<div class="row">
-			<div class="column">
-				<h3>Encoded SD-JWT</h3>
-				<div class="box">
-					<div class="editor" bind:this={editorEncodedSdJwtElement} />
-				</div>
-			</div>
-			<div class="column">
-				<h3>Header</h3>
-				<div class="box">
-					<div class="editor" bind:this={editorDecodedHeaderElement} />
-				</div>
-				<h3>Payload</h3>
-
-				<div class="box">
-					<div class="editor" bind:this={editorDecodedPayloadElement} />
-				</div>
-				<h3>Signature</h3>
-
-				<div class="box">
-					<div class="editor" bind:this={editorSignatureElement} />
-				</div>
-			</div>
-			<div class="column">
-				<h3>More information</h3>
-				<div class="box">
-					<div class="infotab">Some information...</div>
-				</div>
-			</div>
+	<div class="row">
+		<div class="column" style="border-top: 0;">
+			<Editor title="Encoded SD-JWT"></Editor>
 		</div>
+		<div class="column" style="border-top: 0;">
+			<Editor title="Header"></Editor>
+			<Editor title="Payload"></Editor>
+			<Editor title="Signature"></Editor>
+		</div>
+		<!--
+		<div class="column" style="flex: 1;">
+			<h3>More information</h3>
+			<div class="infotab">Some information...</div>
+		</div>
+		-->
 	</div>
 </section>
 
 <style>
-	h3 {
-		margin: 0;
-		align-self: center;
-	}
-
 	section {
+		flex: 1;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		flex: 1;
+		height: 100%;
 	}
 
 	.row {
+		flex: 1;
 		display: flex;
 		flex-direction: row;
-		flex-wrap: wrap;
-		width: 100%;
-		height: 100%;
+		width: 80%;
 	}
 
 	.column {
 		display: flex;
 		flex-direction: column;
-		flex-wrap: wrap;
-		flex: 1;
-		margin: 1px;
-	}
+		flex: 2;
 
-	.box {
-		height: 100%;
-		width: 100%;
-		min-height: 25vh;
-		flex: 1;
 		border-color: black;
-		border-style: double;
+		border-style: solid;
 		border-width: 1px;
-		margin: 1px;
-	}
 
-	.editor {
-		min-height: 100%;
-		width: 35vw;
-	}
-
-	.infotab {
-		width: 20vw;
+		margin: 0px 0px 0px 0.5rem;
+		min-width: 0;
 	}
 </style>

@@ -13,14 +13,15 @@
 		<slot />
 	</main>
 
-	<footer>This is the footer</footer>
+	<footer><p>This is the footer</p></footer>
 </div>
 
 <style>
 	.app {
 		display: flex;
 		flex-direction: column;
-		min-height: 100vh;
+		height: 100%;
+		width: 100%;
 	}
 
 	main {
