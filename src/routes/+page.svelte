@@ -1,5 +1,14 @@
 <script lang="ts">
 	import Editor from "./Editor.svelte";
+
+	let originalText = "";
+	let base64Text = "";
+
+	function encodeBase64(text: string) {
+		return btoa(encodeURIComponent(text));
+	}
+
+	$: base64Text = encodeBase64(originalText);
 </script>
 
 <svelte:head>
@@ -10,12 +19,12 @@
 <section>
 	<div class="row">
 		<div class="column" style="border-top: 0;">
-			<Editor title="Encoded SD-JWT"></Editor>
+			<Editor bind:value={originalText} emitChanges={true} title="Encoded SD-JWT"></Editor>
 		</div>
 		<div class="column" style="border-top: 0;">
-			<Editor title="Header"></Editor>
-			<Editor title="Payload"></Editor>
-			<Editor title="Signature"></Editor>
+			<Editor title="Header" emitChanges={false}></Editor>
+			<Editor title="Payload" emitChanges={false}></Editor>
+			<Editor value={base64Text} emitChanges={false} title="Signature"></Editor>
 		</div>
 		<!--
 		<div class="column" style="flex: 1;">

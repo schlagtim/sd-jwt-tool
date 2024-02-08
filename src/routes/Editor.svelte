@@ -2,11 +2,13 @@
 	import { onDestroy, onMount } from "svelte";
 	import type * as Monaco from "monaco-editor/esm/vs/editor/editor.api";
 
+	export let value = "";
 	export let title: string = "Editor";
+	export let emitChanges = true;
 
 	let monaco: typeof Monaco;
-	let editor: Monaco.editor.IStandaloneCodeEditor;
 	let editorElement: HTMLElement;
+	let editorInstance: Monaco.editor.IStandaloneCodeEditor;
 
 	onMount(async () => {
 		monaco = (await import("./monaco")).default;
@@ -24,13 +26,16 @@
 			},
 		});
 
-		const editorInstance = monaco.editor.create(editorElement, {
+		editorInstance = monaco.editor.create(editorElement, {
 			autoIndent: "full",
 			formatOnPaste: true,
 			formatOnType: true,
+			wordWrap: "on",
 			// theme: "vs-dark",
 			tabSize: 2,
 			automaticLayout: true,
+			readOnly: false,
+			linkedEditing: true,
 			minimap: {
 				enabled: false,
 			},
@@ -43,20 +48,32 @@
 
 		editorInstance.setModel(modelEncoded);
 
-		setTimeout(() => {
-			try {
-				editorInstance.getAction("editor.action.formatDocument")?.run();
-			} catch (error) {
-				console.warn("JSON is not correct");
+		/*
+		try {
+			editorInstance.getAction("editor.action.formatDocument")?.run();
+		} catch (error) {
+			console.warn("JSON is not correct");
 
-				return;
-			}
-		}, 1000);
+			return;
+		}
+		*/
+
+		if (emitChanges) {
+			editorInstance.onDidChangeModelContent((event) => {
+				console.log("Change", editorInstance.getValue());
+				value = editorInstance.getValue();
+			});
+		}
 	});
+
+	$: if (editorInstance && !emitChanges) {
+		console.log("Set value", value);
+		editorInstance.setValue(value);
+	}
 
 	onDestroy(() => {
 		monaco?.editor.getModels().forEach((model) => model.dispose());
-		editor?.dispose();
+		editorInstance?.dispose();
 	});
 </script>
 
