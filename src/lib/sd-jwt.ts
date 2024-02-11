@@ -1,3 +1,5 @@
+import { SdJwt } from "@sd-jwt/core";
+
 export function splitJwt(text: string): string[] {
 	const result = text.split(".");
 	console.log(result);
@@ -28,4 +30,30 @@ export function formatJson(text: string) {
 	}
 
 	return result;
+}
+
+export function formatJsonObject(json: any) {
+	let result: string = "";
+
+	if (!json) {
+		return "";
+	}
+
+	try {
+		result = JSON.stringify(json, null, "\t");
+	} catch (error) {
+		console.warn("Could not format JSON", error);
+	}
+
+	return result;
+}
+
+export function decodeSdJwt(encodedJwt: string) {
+	try {
+		return SdJwt.fromCompact(encodedJwt);
+	} catch (error) {
+		console.warn(error);
+
+		return undefined;
+	}
 }

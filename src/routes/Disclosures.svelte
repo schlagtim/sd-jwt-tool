@@ -1,26 +1,12 @@
 <script lang="ts">
-	let disclosures = [
-		{
-			salt: "oUrlRs_G9gqiP7j8L8OzGw",
-			key: "name",
-			value: "John",
-		},
-		{
-			salt: "izWzspP351vnyw3tzz4nSg",
-			key: "lastName",
-			value: "Doe",
-		},
-		{
-			salt: "qc9NnEcyP8bk1WdJLNwsPA",
-			key: "dateOfBirth",
-			value: "1970.01.01",
-		},
-	];
+	import type { Disclosure } from "@sd-jwt/core";
+
+	export let disclosures: Disclosure[] = [];
 </script>
 
 <div class="box">
 	<div class="stripes">
-		<h5>{"Disclosures (Example)".toUpperCase()}</h5>
+		<h5>DISCLOSURES</h5>
 	</div>
 	{#each disclosures as disclosure}
 		<div class="stripes">
