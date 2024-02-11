@@ -1,14 +1,16 @@
 <script lang="ts">
+	import { decodeBase64, formatJson, splitJwt } from "$lib/sd-jwt";
 	import Editor from "./Editor.svelte";
 
-	let originalText = "";
-	let base64Text = "";
+	let encodedJwt =
+		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+	let jwtHeader = "";
+	let jwtPayload = "";
+	let jwtSignature = "";
 
-	function encodeBase64(text: string) {
-		return btoa(encodeURIComponent(text));
-	}
-
-	$: base64Text = encodeBase64(originalText);
+	$: jwtHeader = formatJson(decodeBase64(splitJwt(encodedJwt)[0]));
+	$: jwtPayload = formatJson(decodeBase64(splitJwt(encodedJwt)[1]));
+	$: jwtSignature = splitJwt(encodedJwt)[2];
 </script>
 
 <svelte:head>
@@ -19,12 +21,12 @@
 <section>
 	<div class="row">
 		<div class="column" style="border-top: 0;">
-			<Editor bind:value={originalText} emitChanges={true} title="Encoded SD-JWT"></Editor>
+			<Editor bind:value={encodedJwt} emitChanges={true} title="Encoded SD-JWT"></Editor>
 		</div>
 		<div class="column" style="border-top: 0;">
-			<Editor title="Header" emitChanges={false}></Editor>
-			<Editor title="Payload" emitChanges={false}></Editor>
-			<Editor value={base64Text} emitChanges={false} title="Signature"></Editor>
+			<Editor title="Header" language="json" value={jwtHeader} emitChanges={false}></Editor>
+			<Editor title="Payload" language="json" value={jwtPayload} emitChanges={false}></Editor>
+			<Editor title="Signature" value={jwtSignature} emitChanges={false}></Editor>
 		</div>
 		<!--
 		<div class="column" style="flex: 1;">

@@ -4,6 +4,7 @@
 
 	export let value = "";
 	export let title: string = "Editor";
+	export let language: string = "plaintext";
 	export let emitChanges = true;
 
 	let monaco: typeof Monaco;
@@ -13,6 +14,7 @@
 	onMount(async () => {
 		monaco = (await import("./monaco")).default;
 
+		/*
 		monaco.languages.registerDocumentFormattingEditProvider("json", {
 			provideDocumentFormattingEdits(model, options, token) {
 				const formatted = JSON.stringify(JSON.parse(model.getValue()), null, "\t");
@@ -25,6 +27,7 @@
 				];
 			},
 		});
+		*/
 
 		editorInstance = monaco.editor.create(editorElement, {
 			autoIndent: "full",
@@ -40,11 +43,7 @@
 				enabled: false,
 			},
 		});
-
-		const exampleJson =
-			'{"this":"is","an":"example","json":[{"one":1},2,{"three":3 }],"it_should_be_an_encoded":"sd-jwt"}';
-
-		const modelEncoded = monaco.editor.createModel(exampleJson, "json");
+		const modelEncoded = monaco.editor.createModel(value, language);
 
 		editorInstance.setModel(modelEncoded);
 
