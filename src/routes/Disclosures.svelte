@@ -11,10 +11,12 @@
 	{#each disclosures as disclosure}
 		<div class="stripes">
 			<p style="text-align: center;"><small><b>{disclosure.key}</b></small></p>
-			<p>
-				<small> Value:</small>
-				<small class="right">{disclosure.value}</small>
-			</p>
+			<div style="background-color: whitesmoke;">
+				<p>
+					<small> Value:</small>
+					<small class="right">{disclosure.value}</small>
+				</p>
+			</div>
 			<p>
 				<small> Salt:</small>
 				<small class="right"><i>{disclosure.salt}</i></small>
