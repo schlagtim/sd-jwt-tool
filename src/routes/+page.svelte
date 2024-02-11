@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { decodeBase64, formatJson, splitJwt } from "$lib/sd-jwt";
+	import Disclosures from "./Disclosures.svelte";
 	import Editor from "./Editor.svelte";
 
 	let encodedJwt =
@@ -28,12 +29,9 @@
 			<Editor title="Payload" language="json" value={jwtPayload} emitChanges={false}></Editor>
 			<Editor title="Signature" value={jwtSignature} emitChanges={false}></Editor>
 		</div>
-		<!--
 		<div class="column" style="flex: 1;">
-			<h3>More information</h3>
-			<div class="infotab">Some information...</div>
+			<Disclosures></Disclosures>
 		</div>
-		-->
 	</div>
 </section>
 

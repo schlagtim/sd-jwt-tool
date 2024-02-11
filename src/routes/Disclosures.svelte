@@ -1,0 +1,86 @@
+<script lang="ts">
+	let disclosures = [
+		{
+			salt: "oUrlRs_G9gqiP7j8L8OzGw",
+			key: "name",
+			value: "John",
+		},
+		{
+			salt: "izWzspP351vnyw3tzz4nSg",
+			key: "lastName",
+			value: "Doe",
+		},
+		{
+			salt: "qc9NnEcyP8bk1WdJLNwsPA",
+			key: "dateOfBirth",
+			value: "1970.01.01",
+		},
+	];
+</script>
+
+<div class="box">
+	<div class="stripes">
+		<h5>{"Disclosures (Example)".toUpperCase()}</h5>
+	</div>
+	{#each disclosures as disclosure}
+		<div class="stripes">
+			<p style="text-align: center;"><small><b>{disclosure.key}</b></small></p>
+			<p>
+				<small> Value:</small>
+				<small class="right">{disclosure.value}</small>
+			</p>
+			<p>
+				<small> Salt:</small>
+				<small class="right"><i>{disclosure.salt}</i></small>
+			</p>
+		</div>
+	{/each}
+</div>
+
+<style>
+	h5 {
+		margin: 0.5rem;
+		text-align: center;
+	}
+
+	p {
+		flex: 1;
+		margin: 0 0.5rem;
+
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+	}
+
+	small {
+		flex: 1;
+
+		min-width: 0;
+	}
+
+	.right {
+		flex: 3;
+
+		text-align: right;
+	}
+
+	.stripes {
+		display: flex;
+		flex-direction: column;
+
+		border-color: black;
+		border-style: solid;
+		border-width: 1px;
+		border-left: 0;
+		border-right: 0;
+		border-top: 0;
+	}
+
+	.box {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+
+		background-color: #fffffe;
+	}
+</style>
