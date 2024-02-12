@@ -7,10 +7,12 @@
 	export let language: string = "plaintext";
 	export let emitChanges = true;
 	export let flexSize: number = 1;
+	export let selectedText: string = "";
 
 	let monaco: typeof Monaco;
 	let editorElement: HTMLElement;
 	let editorInstance: Monaco.editor.IStandaloneCodeEditor;
+	let selectText: any = null;
 
 	onMount(async () => {
 		monaco = (await import("./monaco")).default;
@@ -64,11 +66,24 @@
 				value = editorInstance.getValue();
 			});
 		}
+
+		selectText = (substring: string) => {
+			const matches: Monaco.editor.FindMatch[] | undefined = editorInstance
+				.getModel()
+				?.findMatches(substring, true, false, false, null, true);
+
+			if (matches && matches.length > 0) {
+				editorInstance.setSelection(matches[0].range);
+			}
+		};
 	});
 
 	$: if (editorInstance && !emitChanges) {
 		console.log("Set value", value);
 		editorInstance.setValue(value);
+	}
+	$: if (selectText != null) {
+		selectedText ? selectText(selectedText) : undefined;
 	}
 
 	onDestroy(() => {
