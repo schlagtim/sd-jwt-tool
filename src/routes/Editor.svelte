@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte";
 	import type * as Monaco from "monaco-editor/esm/vs/editor/editor.api";
+	import { onDestroy, onMount } from "svelte";
 
 	export let value = "";
 	export let title: string = "Editor";
 	export let language: string = "plaintext";
 	export let emitChanges = true;
+	export let flexSize: number = 1;
 
 	let monaco: typeof Monaco;
 	let editorElement: HTMLElement;
@@ -76,7 +77,7 @@
 	});
 </script>
 
-<div class="box">
+<div class="box" style="--flex-size: {flexSize}">
 	<div class="stripes">
 		<h5>{title.toUpperCase()}</h5>
 	</div>
@@ -98,7 +99,8 @@
 	}
 
 	.box {
-		flex: 1;
+		flex: var(--flex-size);
+
 		display: flex;
 		flex-direction: column;
 

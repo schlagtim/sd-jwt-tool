@@ -14,7 +14,7 @@
 			<div style="background-color: whitesmoke;">
 				<p>
 					<small> Value:</small>
-					<small class="right">{disclosure.value}</small>
+					<small class="right">{JSON.stringify(disclosure.value)}</small>
 				</p>
 			</div>
 			<p>

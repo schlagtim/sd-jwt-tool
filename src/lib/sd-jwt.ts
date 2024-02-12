@@ -32,7 +32,7 @@ export function formatJson(text: string) {
 	return result;
 }
 
-export function formatJsonObject(json: any) {
+export function formatJsonObject(json: unknown) {
 	let result: string = "";
 
 	if (!json) {

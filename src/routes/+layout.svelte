@@ -6,7 +6,7 @@
 	<header>
 		<h1>SD-JWT</h1>
 
-		<p>This is the header</p>
+		<p>Tool for SD-JWT VC inspection</p>
 	</header>
 
 	<main>
