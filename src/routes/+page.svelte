@@ -1,21 +1,23 @@
 <script lang="ts">
-	import { decodeSdJwt, formatJsonObject } from "$lib/sd-jwt";
-	import { Disclosure } from "@sd-jwt/core";
+	import { decodeSdJwt, formatJsonObject, provideHasher } from "$lib/sd-jwt";
 	import Disclosures from "./Disclosures.svelte";
 	import Editor from "./Editor.svelte";
+	import type { DisclosureWithDigest } from "@sd-jwt/core/build/sdJwt";
 
 	let encodedJwt: string | undefined =
-		"eyJhbGciOiJFZERTQSIsInR5cCI6InNkLWp3dCJ9.eyJpYXQiOjE3MDc2NjcxNTM2MzQsImlzcyI6ImRpZDprZXk6c29tZS1yYW5kb20tZGlkLWtleSIsIm5iZiI6MTcwNzY2NzE1MzczNCwiY3JlZGVudGlhbCI6eyJfc2QiOlsiNjRkUkN0YllkVkVMYW90eDBRVlFMZEdqcm9RSG1OUEI0TmI4b1BzbnE3YyIsIjZBMHF6TDQtZ3hrSkFuQ1EtSzN6b2hMYXo2Qzh3TUhXei0tSW41eFdsZmMiLCI2UFgxYXRrNEtpdm5NRDlSZjBMcF9LV2JBRkJVT1RPQjN1NzFmZzRPZ2NrIiwiWE4tZzluLXphODViVnhPaWlQUXF2Vl9VVmtLdG04VXlWbFZJZElCU3ltNCIsIm5Xc29GQ2V1cnFLZzJDbmFEeUxKMXV5UUtNUmtPdFFNMV95dUtaTjR5VlEiLCJ2bnBZcU1qOTdVMUZPX3VzRHhacWZVcl84Z2ZvdkpfdDNpVmo1OWtfZGkwIl19LCJfc2RfYWxnIjoic2hhLTI1NiIsIl9zZCI6WyJFX2N2SWNYOGYzYnZFNXVNVzctNEp5ZnNNMkNycUFhLVBjOU15MmtNaGFNIiwidlcxdWJSTUotVFBlRzIzS0J1OElleXlNeXVJRG5QNDB3SzR0YmRjbDdxdyIsInl5aTItMVJLaVNiR2YyY3hyX2VkQkljbVNUdzJMSVQ4dWUwVm1RemNpeTgiXX0.zeCXWQgiWFJIFZBVC9GKKSilJ--6u8OIQ4AnDRopKN4KQtYS8Z98ORxWb3_bDOdmNEHDvMqtAkEvxqk08_USCQ~WyJpSFFLaDlFM3BxZUluLXFvelVMMU93IiwiY3JlZGVudGlhbFN1YmplY3QiLCJkaWQ6cGVlcjo0cmVjZWl2ZXItcGVlci1kaWQiXQ~WyJxYzlObkVjeVA4YmsxV2RKTE53c1BBIiwiZGF0ZU9mQmlydGgiLCIyMDAwMDEwMSJd~WyJvVXJsUnNfRzlncWlQN2o4TDhPekd3IiwibmFtZSIsIkpvaG4iXQ~WyJpeld6c3BQMzUxdm55dzN0eno0blNnIiwibGFzdE5hbWUiLCJEb2UiXQ~eyJ0eXAiOiJrYitqd3QiLCJhbGciOiJFZERTQSJ9.eyJpYXQiOjE3MDc2NjcxNTM2MzMsImF1ZCI6ImRpZDpwZWVyOjQ6c29tZS12ZXJpZmllciIsIm5vbmNlIjoiaVloOXBoU3ZWWTFVcUpsX05pNklJUSIsIl9zZF9oYXNoIjoiRTYwNWJfbnJPallsdUlSbktfQThKNTNhemwwcG8wcThBbHBJczZrQm5JWSJ9.6ZAydMHRVByM02Z79zQSWuZU3ZfNIkmVrMXM2ZVR-nN92h_J9D5-2cB7gPZ3aDP3Z-BY1Wj2kp_cIakv5ji3Cw";
+		"eyJhbGciOiAiRVMyNTYiLCAidHlwIjogInZjK3NkLWp3dCJ9.eyJfc2QiOiBbIjBuOXl6RlNXdktfQlVIaWFNaG0xMmdockN0VmFockdKNl8ta1pQLXlTcTQiLCAiQ2gtREJjTDNrYjRWYkhJd3Rrbm5aZE5VSHRoRXE5TVpqb0ZkZzZpZGlobyIsICJEVzdnRlZaU3V5cjQyWVNZeDhwOHJWS0VrdEp6SjN1RkltZW5tSkJJbWRzIiwgIkkwMGZjRlVvRFhDdWNwNXl5MnVqcVBzc0RWR2FXTmlVbGlOel9hd0QwZ2MiLCAiWDlNYVBhRldtUVlwZkhFZHl0UmRhY2xuWW9FcnU4RXp0QkVVUXVXT2U0NCIsICJkOHFrZlBkb2UyUFlFOTNkNU1fZ0JMMWdabHBGUktDYzBkMWxhb2RfX3MwIiwgImxJM0wwaHNlQ1JXbVVQZzgyVkNVTl9hMTdzTUxfNjRRZ0E0SkZUWURGREUiLCAicHVNcEdMb0FHUmJjc0FnNTBVWjBoaFFMS0NMNnF6eFNLNDMwNGtCbjNfSSIsICJ6VTQ1MmxrR2JFS2g4WnVIXzhLeDNDVXZuMUY0eTFnWkxxbERUZ1hfOFBrIl0sICJpc3MiOiAiaHR0cHM6Ly9waWQtcHJvdmlkZXIubWVtYmVyc3RhdGUuZXhhbXBsZS5ldSIsICJpYXQiOiAxNTQxNDkzNzI0LCAiZXhwIjogMTg4MzAwMDAwMCwgInZjdCI6ICJQZXJzb25JZGVudGlmaWNhdGlvbkRhdGEiLCAiX3NkX2FsZyI6ICJzaGEtMjU2IiwgImNuZiI6IHsiandrIjogeyJrdHkiOiAiRUMiLCAiY3J2IjogIlAtMjU2IiwgIngiOiAiVENBRVIxOVp2dTNPSEY0ajRXNHZmU1ZvSElQMUlMaWxEbHM3dkNlR2VtYyIsICJ5IjogIlp4amlXV2JaTVFHSFZXS1ZRNGhiU0lpcnNWZnVlY0NFNnQ0alQ5RjJIWlEifX19.VStKGOA5TdLsrjahM4dRfDrbsy7BmrUNGw3jaBuxZnHYvmS2EnQ-ib7zSCUVBGGbcyORDFCMd_F6gr8CM9N3WQ~WyIyR0xDNDJzS1F2ZUNmR2ZyeU5STjl3IiwgImZpcnN0X25hbWUiLCAiRXJpa2EiXQ~WyJlbHVWNU9nM2dTTklJOEVZbnN4QV9BIiwgImZhbWlseV9uYW1lIiwgIk11c3Rlcm1hbm4iXQ~WyI2SWo3dE0tYTVpVlBHYm9TNXRtdlZBIiwgIkRFIl0~WyJlSThaV205UW5LUHBOUGVOZW5IZGhRIiwgIm5hdGlvbmFsaXRpZXMiLCBbeyIuLi4iOiAiSnVMMzJRWER6aXpsLUw2Q0xyZnhmanBac1gzTzZ2c2ZwQ1ZkMWprd0pZZyJ9XV0~WyJRZ19PNjR6cUF4ZTQxMmExMDhpcm9BIiwgImJpcnRoX2ZhbWlseV9uYW1lIiwgIlNjaG1pZHQiXQ~WyJBSngtMDk1VlBycFR0TjRRTU9xUk9BIiwgImJpcnRoZGF0ZSIsICIxOTczLTAxLTAxIl0~WyJQYzMzSk0yTGNoY1VfbEhnZ3ZfdWZRIiwgImFkZHJlc3MiLCB7InBvc3RhbF9jb2RlIjogIjEyMzQ1IiwgImxvY2FsaXR5IjogIklyZ2VuZHdvIiwgInN0cmVldF9hZGRyZXNzIjogIlNvbm5lbnN0cmFzc2UgMjMiLCAiY291bnRyeV9jb2RlIjogIkRFIn1d~WyJHMDJOU3JRZmpGWFE3SW8wOXN5YWpBIiwgImlzX292ZXJfMTgiLCB0cnVlXQ~WyJsa2x4RjVqTVlsR1RQVW92TU5JdkNBIiwgImlzX292ZXJfMjEiLCB0cnVlXQ~WyJuUHVvUW5rUkZxM0JJZUFtN0FuWEZBIiwgImlzX292ZXJfNjUiLCBmYWxzZV0~";
 	let jwtHeader = "";
 	let jwtPayload = "";
 	let jwtSignature = "";
-	let disclosures: Disclosure[] = [];
+	let disclosures: Promise<DisclosureWithDigest[] | undefined> | undefined;
+	let alg: any;
 
 	$: sdJWt = encodedJwt ? decodeSdJwt(encodedJwt) : undefined;
 	$: jwtHeader = formatJsonObject(sdJWt?.header);
 	$: jwtPayload = formatJsonObject(sdJWt?.payload);
 	$: jwtSignature = sdJWt?.signature ? sdJWt?.signature.toLocaleString() : "";
-	$: disclosures = sdJWt?.disclosures ? sdJWt?.disclosures : [];
+	$: alg = sdJWt ? sdJWt?.payload["_sd_alg"] : "";
+	$: disclosures = sdJWt ? sdJWt?.withHasher(provideHasher(alg)).disclosuresWithDigest() : undefined;
 </script>
 
 <svelte:head>
@@ -35,7 +37,12 @@
 			<Editor title="Signature" value={jwtSignature} emitChanges={false}></Editor>
 		</div>
 		<div class="column" style="flex: 1;">
-			<Disclosures {disclosures}></Disclosures>
+			{#await disclosures}
+			{:then disclosures}
+				<Disclosures {disclosures}></Disclosures>
+			{:catch error}
+				<p style="color: red">{error.message}</p>
+			{/await}
 		</div>
 	</div>
 </section>
