@@ -13,7 +13,7 @@
 		<slot />
 	</main>
 
-	<footer><p>This is the footer</p></footer>
+	<footer><p></p></footer>
 </div>
 
 <style>

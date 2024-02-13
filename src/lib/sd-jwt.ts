@@ -74,7 +74,6 @@ export function provideHasher(alg: string) {
 	}
 	var enc = new TextEncoder();
 	const hasherAndAlgorithm: HasherAndAlgorithm = {
-		// TODO: how do you properly cast this?
 		hasher: (input: string) =>
 			crypto.subtle
 				.digest(browserAlg, enc.encode(input))

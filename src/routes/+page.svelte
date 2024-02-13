@@ -12,7 +12,7 @@
 	let jwtSignature = "";
 	let disclosures: Promise<DisclosureWithDigest[] | undefined> | undefined;
 	let alg: any;
-	let jwtPayloadSelection = "credential";
+	let jwtPayloadSelection: string;
 
 	$: sdJWt = encodedJwt ? decodeSdJwt(encodedJwt) : undefined;
 	$: jwtHeader = formatJsonObject(sdJWt?.header);
