@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { decodeSdJwt, formatJsonObject } from "$lib/sd-jwt";
-	import { Disclosure } from "@sd-jwt/core";
+	import { decodeSdJwt, formatJsonObject, provideHasher } from "$lib/sd-jwt";
 	import Disclosures from "./Disclosures.svelte";
 	import Editor from "./Editor.svelte";
+	import type { DisclosureWithDigest } from "@sd-jwt/core/build/sdJwt";
 	import { onMount } from "svelte";
 
 	let encodedJwt: string | undefined =
@@ -10,14 +10,18 @@
 	let jwtHeader = "";
 	let jwtPayload = "";
 	let jwtSignature = "";
+	let disclosures: Promise<DisclosureWithDigest[] | undefined> | undefined;
+	let alg: any;
 	let jwtPayloadSelection = "credential";
-	let disclosures: Disclosure[] = [];
 
 	$: sdJWt = encodedJwt ? decodeSdJwt(encodedJwt) : undefined;
 	$: jwtHeader = formatJsonObject(sdJWt?.header);
 	$: jwtPayload = formatJsonObject(sdJWt?.payload);
 	$: jwtSignature = sdJWt?.signature ? sdJWt?.signature.toLocaleString() : "";
-	$: disclosures = sdJWt?.disclosures ? sdJWt?.disclosures : [];
+	$: alg = sdJWt ? sdJWt?.payload["_sd_alg"] : "";
+	$: disclosures = sdJWt
+		? sdJWt?.withHasher(provideHasher(alg)).disclosuresWithDigest()
+		: undefined;
 </script>
 
 <svelte:head>
@@ -43,7 +47,11 @@
 			<Editor title="Signature" value={jwtSignature} emitChanges={false}></Editor>
 		</div>
 		<div class="column" style="flex: 1;">
-			<Disclosures {disclosures}></Disclosures>
+			{#await disclosures then disclosures}
+				<Disclosures bind:jwtPayloadSelection {disclosures}></Disclosures>
+			{:catch error}
+				<p style="color: red">{error.message}</p>
+			{/await}
 		</div>
 	</div>
 </section>

@@ -84,6 +84,7 @@
 	}
 	$: if (selectText != null) {
 		selectedText ? selectText(selectedText) : undefined;
+		console.log("setting hover target", selectedText);
 	}
 
 	onDestroy(() => {
