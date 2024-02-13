@@ -60,27 +60,31 @@ export function decodeSdJwt(encodedJwt: string) {
 
 export default crypto;
 export function provideHasher(alg: string) {
-	let browserAlg: string = '';
+	let browserAlg: string = "";
 	switch (alg.toLowerCase()) {
-		case 'sha-256':
-			browserAlg = "SHA-256"
+		case "sha-256":
+			browserAlg = "SHA-256";
 			break;
-		case 'sha-384':
-			browserAlg = "SHA-384"
+		case "sha-384":
+			browserAlg = "SHA-384";
 			break;
-		case 'sha-512':
-			browserAlg = "SHA-512"
+		case "sha-512":
+			browserAlg = "SHA-512";
 			break;
 	}
 	var enc = new TextEncoder();
 	const hasherAndAlgorithm: HasherAndAlgorithm = {
 		// TODO: how do you properly cast this?
-		hasher: (input: string) => crypto.subtle.digest(browserAlg, enc.encode(input)).then((val) => {
-			return new Uint8Array(val);
-		}).catch((err) => {
-			return new Uint8Array(0);
-		}),
+		hasher: (input: string) =>
+			crypto.subtle
+				.digest(browserAlg, enc.encode(input))
+				.then((val) => {
+					return new Uint8Array(val);
+				})
+				.catch((err) => {
+					return new Uint8Array(0);
+				}),
 		algorithm: alg,
-	}
+	};
 	return hasherAndAlgorithm;
 }

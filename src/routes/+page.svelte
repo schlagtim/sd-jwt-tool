@@ -14,13 +14,14 @@
 	let alg: any;
 	let jwtPayloadSelection = "credential";
 
-
 	$: sdJWt = encodedJwt ? decodeSdJwt(encodedJwt) : undefined;
 	$: jwtHeader = formatJsonObject(sdJWt?.header);
 	$: jwtPayload = formatJsonObject(sdJWt?.payload);
 	$: jwtSignature = sdJWt?.signature ? sdJWt?.signature.toLocaleString() : "";
 	$: alg = sdJWt ? sdJWt?.payload["_sd_alg"] : "";
-	$: disclosures = sdJWt ? sdJWt?.withHasher(provideHasher(alg)).disclosuresWithDigest() : undefined;
+	$: disclosures = sdJWt
+		? sdJWt?.withHasher(provideHasher(alg)).disclosuresWithDigest()
+		: undefined;
 </script>
 
 <svelte:head>
@@ -46,9 +47,8 @@
 			<Editor title="Signature" value={jwtSignature} emitChanges={false}></Editor>
 		</div>
 		<div class="column" style="flex: 1;">
-			{#await disclosures}
-			{:then disclosures}
-				<Disclosures bind:jwtPayloadSelection={jwtPayloadSelection} {disclosures}></Disclosures>
+			{#await disclosures then disclosures}
+				<Disclosures bind:jwtPayloadSelection {disclosures}></Disclosures>
 			{:catch error}
 				<p style="color: red">{error.message}</p>
 			{/await}
