@@ -1,5 +1,12 @@
-import { SdJwt, type HasherAndAlgorithm, HasherAlgorithm } from "@sd-jwt/core";
+import {
+	SdJwt,
+	type HasherAndAlgorithm,
+	HasherAlgorithm,
+	type Verifier,
+	type VerifyOptions,
+} from "@sd-jwt/core";
 import type { DisclosureWithDigest } from "@sd-jwt/types";
+import * as jose from "jose";
 
 export type DisclosureType = {
 	salt: string;
@@ -9,9 +16,7 @@ export type DisclosureType = {
 };
 
 export function splitJwt(text: string): string[] {
-	const result = text.split(".");
-	console.log(result);
-	return result;
+	return text.split(".");
 }
 
 export function decodeBase64(text: string) {
@@ -60,23 +65,43 @@ export function decodeSdJwt(encodedJwt: string) {
 	try {
 		return SdJwt.fromCompact(encodedJwt);
 	} catch (error) {
-		console.warn(error);
-
 		return undefined;
 	}
 }
 
-export async function getDisclosures(
-	sdJwt: SdJwt,
-	alg: string,
-): Promise<DisclosureWithDigest[] | undefined> {
-	const disclosures = await sdJwt.withHasher(provideHasher(alg)).disclosuresWithDigest();
+export async function validateJwtSignature(
+	jwt: string,
+	publicKeyJwk: jose.JWK,
+	alg?: string,
+): Promise<boolean> {
+	try {
+		const publicKey = await jose.importJWK(publicKeyJwk, alg);
+		await jose.jwtVerify(jwt, publicKey);
 
-	return disclosures?.map((disclosure) => disclosure.asJson());
+		return true;
+	} catch (error) {
+		console.warn("JWT signature could not be verified");
+
+		return false;
+	}
 }
 
-export default crypto;
-export function provideHasher(alg: string) {
+export async function getDisclosures(
+	sdJwt?: SdJwt,
+	alg?: string,
+): Promise<DisclosureWithDigest[] | undefined> {
+	try {
+		const disclosures = await sdJwt?.withHasher(provideHasher(alg)).disclosuresWithDigest();
+
+		return disclosures ? disclosures.map((disclosure) => disclosure.asJson()) : [];
+	} catch (error) {
+		console.warn((error as Error).message);
+
+		return [];
+	}
+}
+
+export function provideHasher(alg: string = "sha-256") {
 	let browserAlg: string = "";
 	switch (alg.toLowerCase()) {
 		case "sha-256":

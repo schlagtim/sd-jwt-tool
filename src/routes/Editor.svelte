@@ -63,7 +63,6 @@
 
 		if (emitChanges) {
 			editorInstance.onDidChangeModelContent((event) => {
-				console.log("Change", editorInstance.getValue());
 				value = editorInstance.getValue();
 			});
 		}
@@ -80,12 +79,12 @@
 	});
 
 	$: if (editorInstance && !emitChanges) {
-		console.log("Set value", value);
 		editorInstance.setValue(value);
 	}
 	$: if (selectText != null) {
 		selectedText ? selectText(selectedText) : undefined;
-		console.log("setting hover target", selectedText);
+
+		// console.log("setting hover target", selectedText);
 	}
 
 	onDestroy(() => {

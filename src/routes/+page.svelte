@@ -9,17 +9,23 @@
 		"eyJhbGciOiJFZERTQSIsInR5cCI6InNkLWp3dCJ9.eyJpYXQiOjE3MDc2NjcxNTM2MzQsImlzcyI6ImRpZDprZXk6c29tZS1yYW5kb20tZGlkLWtleSIsIm5iZiI6MTcwNzY2NzE1MzczNCwiY3JlZGVudGlhbCI6eyJfc2QiOlsiNjRkUkN0YllkVkVMYW90eDBRVlFMZEdqcm9RSG1OUEI0TmI4b1BzbnE3YyIsIjZBMHF6TDQtZ3hrSkFuQ1EtSzN6b2hMYXo2Qzh3TUhXei0tSW41eFdsZmMiLCI2UFgxYXRrNEtpdm5NRDlSZjBMcF9LV2JBRkJVT1RPQjN1NzFmZzRPZ2NrIiwiWE4tZzluLXphODViVnhPaWlQUXF2Vl9VVmtLdG04VXlWbFZJZElCU3ltNCIsIm5Xc29GQ2V1cnFLZzJDbmFEeUxKMXV5UUtNUmtPdFFNMV95dUtaTjR5VlEiLCJ2bnBZcU1qOTdVMUZPX3VzRHhacWZVcl84Z2ZvdkpfdDNpVmo1OWtfZGkwIl19LCJfc2RfYWxnIjoic2hhLTI1NiIsIl9zZCI6WyJFX2N2SWNYOGYzYnZFNXVNVzctNEp5ZnNNMkNycUFhLVBjOU15MmtNaGFNIiwidlcxdWJSTUotVFBlRzIzS0J1OElleXlNeXVJRG5QNDB3SzR0YmRjbDdxdyIsInl5aTItMVJLaVNiR2YyY3hyX2VkQkljbVNUdzJMSVQ4dWUwVm1RemNpeTgiXX0.zeCXWQgiWFJIFZBVC9GKKSilJ--6u8OIQ4AnDRopKN4KQtYS8Z98ORxWb3_bDOdmNEHDvMqtAkEvxqk08_USCQ~WyJpSFFLaDlFM3BxZUluLXFvelVMMU93IiwiY3JlZGVudGlhbFN1YmplY3QiLCJkaWQ6cGVlcjo0cmVjZWl2ZXItcGVlci1kaWQiXQ~WyJxYzlObkVjeVA4YmsxV2RKTE53c1BBIiwiZGF0ZU9mQmlydGgiLCIyMDAwMDEwMSJd~WyJvVXJsUnNfRzlncWlQN2o4TDhPekd3IiwibmFtZSIsIkpvaG4iXQ~WyJpeld6c3BQMzUxdm55dzN0eno0blNnIiwibGFzdE5hbWUiLCJEb2UiXQ~eyJ0eXAiOiJrYitqd3QiLCJhbGciOiJFZERTQSJ9.eyJpYXQiOjE3MDc2NjcxNTM2MzMsImF1ZCI6ImRpZDpwZWVyOjQ6c29tZS12ZXJpZmllciIsIm5vbmNlIjoiaVloOXBoU3ZWWTFVcUpsX05pNklJUSIsIl9zZF9oYXNoIjoiRTYwNWJfbnJPallsdUlSbktfQThKNTNhemwwcG8wcThBbHBJczZrQm5JWSJ9.6ZAydMHRVByM02Z79zQSWuZU3ZfNIkmVrMXM2ZVR-nN92h_J9D5-2cB7gPZ3aDP3Z-BY1Wj2kp_cIakv5ji3Cw";
 	let jwtHeader = "";
 	let jwtPayload = "";
-	let jwtSignature = "";
-	let disclosures: Promise<DisclosureWithDigest[] | undefined> | undefined;
-	let alg: any;
+	let disclosures: DisclosureWithDigest[] | undefined;
+	let alg: string | undefined;
 	let jwtPayloadSelection: string;
+	let signatureVerified: boolean = false;
 
 	$: sdJwt = encodedJwt ? decodeSdJwt(encodedJwt) : undefined;
-	$: jwtHeader = formatJsonObject(sdJwt?.header);
-	$: jwtPayload = formatJsonObject(sdJwt?.payload);
-	$: jwtSignature = sdJwt?.signature ? sdJwt?.signature.toLocaleString() : "";
-	$: alg = sdJwt ? sdJwt?.payload["_sd_alg"] : "";
-	$: disclosures = sdJwt ? getDisclosures(sdJwt, alg) : undefined;
+	$: jwtHeader = sdJwt ? formatJsonObject(sdJwt?.header) : "";
+	$: jwtPayload = sdJwt ? formatJsonObject(sdJwt?.payload) : "";
+	$: alg = sdJwt ? (sdJwt?.payload["_sd_alg"] as string) : undefined;
+	$: getDisclosures(sdJwt, alg)
+		.then((result) => {
+			disclosures = result;
+		})
+		.catch((error) => {
+			console.warn(error.message);
+			disclosures = [];
+		});
 </script>
 
 <svelte:head>
@@ -45,11 +51,7 @@
 			<Signature></Signature>
 		</div>
 		<div class="column" style="flex: 1;">
-			{#await disclosures then disclosures}
-				<Disclosures bind:jwtPayloadSelection {disclosures}></Disclosures>
-			{:catch error}
-				<p style="color: red">{error.message}</p>
-			{/await}
+			<Disclosures bind:jwtPayloadSelection {disclosures}></Disclosures>
 		</div>
 	</div>
 </section>
