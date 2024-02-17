@@ -1,4 +1,12 @@
 import { SdJwt, type HasherAndAlgorithm, HasherAlgorithm } from "@sd-jwt/core";
+import type { DisclosureWithDigest } from "@sd-jwt/types";
+
+export type DisclosureType = {
+	salt: string;
+	key?: string;
+	value: any;
+	digest: string;
+};
 
 export function splitJwt(text: string): string[] {
 	const result = text.split(".");
@@ -56,6 +64,15 @@ export function decodeSdJwt(encodedJwt: string) {
 
 		return undefined;
 	}
+}
+
+export async function getDisclosures(
+	sdJwt: SdJwt,
+	alg: string,
+): Promise<DisclosureWithDigest[] | undefined> {
+	const disclosures = await sdJwt.withHasher(provideHasher(alg)).disclosuresWithDigest();
+
+	return disclosures?.map((disclosure) => disclosure.asJson());
 }
 
 export default crypto;

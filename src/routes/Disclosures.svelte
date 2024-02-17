@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Disclosure } from "@sd-jwt/core";
+	import type { DisclosureWithDigest } from "@sd-jwt/types";
 
-	export let disclosures: Disclosure[] = [];
+	export let disclosures: DisclosureWithDigest[] = [];
 	export let jwtPayloadSelection: string = "";
 </script>
 

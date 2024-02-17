@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { decodeSdJwt, formatJsonObject, provideHasher } from "$lib/sd-jwt";
-	import type { DisclosureWithDigest } from "@sd-jwt/core/build/sdJwt";
+	import { decodeSdJwt, formatJsonObject, getDisclosures } from "$lib/sd-jwt";
+	import type { DisclosureWithDigest } from "@sd-jwt/types";
 	import Disclosures from "./Disclosures.svelte";
 	import Editor from "./Editor.svelte";
 	import Signature from "./Signature.svelte";
@@ -14,14 +14,12 @@
 	let alg: any;
 	let jwtPayloadSelection: string;
 
-	$: sdJWt = encodedJwt ? decodeSdJwt(encodedJwt) : undefined;
-	$: jwtHeader = formatJsonObject(sdJWt?.header);
-	$: jwtPayload = formatJsonObject(sdJWt?.payload);
-	$: jwtSignature = sdJWt?.signature ? sdJWt?.signature.toLocaleString() : "";
-	$: alg = sdJWt ? sdJWt?.payload["_sd_alg"] : "";
-	$: disclosures = sdJWt
-		? sdJWt?.withHasher(provideHasher(alg)).disclosuresWithDigest()
-		: undefined;
+	$: sdJwt = encodedJwt ? decodeSdJwt(encodedJwt) : undefined;
+	$: jwtHeader = formatJsonObject(sdJwt?.header);
+	$: jwtPayload = formatJsonObject(sdJwt?.payload);
+	$: jwtSignature = sdJwt?.signature ? sdJwt?.signature.toLocaleString() : "";
+	$: alg = sdJwt ? sdJwt?.payload["_sd_alg"] : "";
+	$: disclosures = sdJwt ? getDisclosures(sdJwt, alg) : undefined;
 </script>
 
 <svelte:head>
