@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from "$app/stores";
 	import type { Disclosure } from "@sd-jwt/core";
 
 	export let disclosures: Disclosure[] = [];
@@ -13,10 +12,12 @@
 	{#each disclosures as disclosure}
 		<div
 			class="stripes"
+			role="contentinfo"
 			on:mouseover={() => {
 				jwtPayloadSelection = disclosure.digest ? disclosure.digest : "";
 				console.log("Hovering ", jwtPayloadSelection);
 			}}
+			on:focus
 		>
 			<p style="text-align: center;"><small><b>{disclosure.key}</b></small></p>
 			<div style="background-color: whitesmoke;">

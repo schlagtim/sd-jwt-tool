@@ -46,6 +46,7 @@
 				enabled: false,
 			},
 		});
+
 		const modelEncoded = monaco.editor.createModel(value, language);
 
 		editorInstance.setModel(modelEncoded);
