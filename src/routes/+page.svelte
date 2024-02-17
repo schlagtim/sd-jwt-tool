@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { decodeSdJwt, formatJsonObject, getDisclosures } from "$lib/sd-jwt";
+	import {
+		SignatureMode,
+		decodeSdJwt,
+		formatJsonObject,
+		getDisclosures,
+		validateJwtSignature,
+	} from "$lib/sd-jwt";
 	import type { DisclosureWithDigest } from "@sd-jwt/types";
 	import Disclosures from "./Disclosures.svelte";
 	import Editor from "./Editor.svelte";
@@ -12,12 +18,23 @@
 	let disclosures: DisclosureWithDigest[] | undefined;
 	let alg: string | undefined;
 	let jwtPayloadSelection: string;
-	let signatureVerified: boolean = false;
+	let signatureVerified: SignatureMode;
+	let signatureKeyBindingVerified: SignatureMode;
+	let showKeyBindingSignatureVerified: boolean = false;
 
 	$: sdJwt = encodedJwt ? decodeSdJwt(encodedJwt) : undefined;
 	$: jwtHeader = sdJwt ? formatJsonObject(sdJwt?.header) : "";
 	$: jwtPayload = sdJwt ? formatJsonObject(sdJwt?.payload) : "";
 	$: alg = sdJwt ? (sdJwt?.payload["_sd_alg"] as string) : undefined;
+	$: encodedJwt
+		? validateJwtSignature(encodedJwt, {})
+				.then((result) => {
+					signatureVerified = result ? SignatureMode.Verified : SignatureMode.CouldNotVerify;
+				})
+				.catch(() => {
+					signatureVerified = SignatureMode.CouldNotVerify;
+				})
+		: undefined;
 	$: getDisclosures(sdJwt, alg)
 		.then((result) => {
 			disclosures = result;
@@ -48,7 +65,11 @@
 				flexSize={4}
 				selectedText={jwtPayloadSelection}
 			></Editor>
-			<Signature></Signature>
+			<Signature
+				jwtSignature={signatureVerified}
+				keyBindingSignature={signatureKeyBindingVerified}
+				showKeyBindingSignature={showKeyBindingSignatureVerified}
+			></Signature>
 		</div>
 		<div class="column" style="flex: 1;">
 			<Disclosures bind:jwtPayloadSelection {disclosures}></Disclosures>

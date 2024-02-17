@@ -8,6 +8,12 @@ import {
 import type { DisclosureWithDigest } from "@sd-jwt/types";
 import * as jose from "jose";
 
+export enum SignatureMode {
+	Verified,
+	Invalid,
+	CouldNotVerify,
+}
+
 export type DisclosureType = {
 	salt: string;
 	key?: string;
