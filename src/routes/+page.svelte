@@ -114,7 +114,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		height: 100%;
+		min-height: 100%;
 	}
 
 	.row {
@@ -137,14 +137,14 @@
 		min-width: 0;
 	}
 
-	@media screen and (max-width: 600px) {
+	@media screen and (max-width: 38em) {
 		.row {
 			flex-direction: column;
 			width: 90%;
 		}
 	}
 
-	@media screen and (max-width: 1450px) {
+	@media screen and (max-width: 90em) {
 		.row {
 			width: 80%;
 		}
