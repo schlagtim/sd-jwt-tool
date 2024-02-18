@@ -7,42 +7,9 @@
 	export let showKeyBindingSignature: boolean = false;
 	export let keyBindingSignature: SignatureMode = SignatureMode.CouldNotVerify;
 
-	const signatureIssue = "⚠️ Could not verify";
-	const signatureValid = "✅ Signature Verified";
-	const signatureInvalid = "❌ Invalid Signature";
-
-	let jwtSignatureMessage: string;
-	let keyBindingSignatureMessage: string;
-
-	/*
-	function setSignatures(keyBinding: boolean) {
-		keyBindingSignature = keyBinding;
-
-		if (keyBinding) {
-			flexSize = 1;
-		} else {
-			flexSize = flexSize / 2;
-		}
-	}
-
-	setSignatures(false);
-	*/
-
-	function setSignatureMessage(mode: SignatureMode) {
-		switch (mode) {
-			case SignatureMode.CouldNotVerify:
-				return signatureIssue;
-			case SignatureMode.Verified:
-				return signatureValid;
-			case SignatureMode.Invalid:
-				return signatureInvalid;
-			default:
-				return signatureInvalid;
-		}
-	}
-
-	$: jwtSignatureMessage = setSignatureMessage(jwtSignature);
-	$: keyBindingSignatureMessage = setSignatureMessage(keyBindingSignature);
+	const signatureIssue = "Could not verify";
+	const signatureValid = "Signature Verified";
+	const signatureInvalid = "Invalid Signature";
 </script>
 
 <div class="box" style="--flex-size: {flexSize}">
@@ -52,12 +19,24 @@
 	<div class="signatures">
 		<div class="row">
 			<h3>JWT Signature:</h3>
-			<h3 class="signatures-right">{jwtSignatureMessage}</h3>
+			{#if jwtSignature === SignatureMode.Verified}
+				<h3 class="signatures-right" style="color: green">{signatureValid}</h3>
+			{:else if jwtSignature === SignatureMode.Invalid}
+				<h3 class="signatures-right" style="color: red">{signatureInvalid}</h3>
+			{:else}
+				<h3 class="signatures-right" style="color: orange">{signatureIssue}</h3>
+			{/if}
 		</div>
 		{#if showKeyBindingSignature}
 			<div class="row">
 				<h3>Key Binding Signature:</h3>
-				<h3 class="signatures-right">{keyBindingSignatureMessage}</h3>
+				{#if keyBindingSignature === SignatureMode.Verified}
+					<h3 class="signatures-right" style="color: green">{signatureValid}</h3>
+				{:else if keyBindingSignature === SignatureMode.Invalid}
+					<h3 class="signatures-right" style="color: red">{signatureInvalid}</h3>
+				{:else}
+					<h3 class="signatures-right" style="color: orange">{signatureIssue}</h3>
+				{/if}
 			</div>
 		{/if}
 	</div>

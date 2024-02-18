@@ -10,9 +10,17 @@
 	import Disclosures from "./Disclosures.svelte";
 	import Editor from "./Editor.svelte";
 	import Signature from "./Signature.svelte";
+	import type { JWK } from "jose";
+
+	// This is not yet fetched and only works for the default example
+	const publicKeyExampleJwt: JWK = {
+		crv: "Ed25519",
+		x: "i_XovdNwR_XoBSkTrZLt9yVQ36KhYbnvbJt0UdrkQTY",
+		kty: "OKP",
+	};
 
 	let encodedJwt: string | undefined =
-		"eyJhbGciOiJFZERTQSIsInR5cCI6InNkLWp3dCJ9.eyJpYXQiOjE3MDc2NjcxNTM2MzQsImlzcyI6ImRpZDprZXk6c29tZS1yYW5kb20tZGlkLWtleSIsIm5iZiI6MTcwNzY2NzE1MzczNCwiY3JlZGVudGlhbCI6eyJfc2QiOlsiNjRkUkN0YllkVkVMYW90eDBRVlFMZEdqcm9RSG1OUEI0TmI4b1BzbnE3YyIsIjZBMHF6TDQtZ3hrSkFuQ1EtSzN6b2hMYXo2Qzh3TUhXei0tSW41eFdsZmMiLCI2UFgxYXRrNEtpdm5NRDlSZjBMcF9LV2JBRkJVT1RPQjN1NzFmZzRPZ2NrIiwiWE4tZzluLXphODViVnhPaWlQUXF2Vl9VVmtLdG04VXlWbFZJZElCU3ltNCIsIm5Xc29GQ2V1cnFLZzJDbmFEeUxKMXV5UUtNUmtPdFFNMV95dUtaTjR5VlEiLCJ2bnBZcU1qOTdVMUZPX3VzRHhacWZVcl84Z2ZvdkpfdDNpVmo1OWtfZGkwIl19LCJfc2RfYWxnIjoic2hhLTI1NiIsIl9zZCI6WyJFX2N2SWNYOGYzYnZFNXVNVzctNEp5ZnNNMkNycUFhLVBjOU15MmtNaGFNIiwidlcxdWJSTUotVFBlRzIzS0J1OElleXlNeXVJRG5QNDB3SzR0YmRjbDdxdyIsInl5aTItMVJLaVNiR2YyY3hyX2VkQkljbVNUdzJMSVQ4dWUwVm1RemNpeTgiXX0.zeCXWQgiWFJIFZBVC9GKKSilJ--6u8OIQ4AnDRopKN4KQtYS8Z98ORxWb3_bDOdmNEHDvMqtAkEvxqk08_USCQ~WyJpSFFLaDlFM3BxZUluLXFvelVMMU93IiwiY3JlZGVudGlhbFN1YmplY3QiLCJkaWQ6cGVlcjo0cmVjZWl2ZXItcGVlci1kaWQiXQ~WyJxYzlObkVjeVA4YmsxV2RKTE53c1BBIiwiZGF0ZU9mQmlydGgiLCIyMDAwMDEwMSJd~WyJvVXJsUnNfRzlncWlQN2o4TDhPekd3IiwibmFtZSIsIkpvaG4iXQ~WyJpeld6c3BQMzUxdm55dzN0eno0blNnIiwibGFzdE5hbWUiLCJEb2UiXQ~eyJ0eXAiOiJrYitqd3QiLCJhbGciOiJFZERTQSJ9.eyJpYXQiOjE3MDc2NjcxNTM2MzMsImF1ZCI6ImRpZDpwZWVyOjQ6c29tZS12ZXJpZmllciIsIm5vbmNlIjoiaVloOXBoU3ZWWTFVcUpsX05pNklJUSIsIl9zZF9oYXNoIjoiRTYwNWJfbnJPallsdUlSbktfQThKNTNhemwwcG8wcThBbHBJczZrQm5JWSJ9.6ZAydMHRVByM02Z79zQSWuZU3ZfNIkmVrMXM2ZVR-nN92h_J9D5-2cB7gPZ3aDP3Z-BY1Wj2kp_cIakv5ji3Cw";
+		"eyJhbGciOiJFZERTQSIsInR5cCI6InNkLWp3dCJ9.eyJpYXQiOjE3MDgyNzc4Mjg2NjIsImlzcyI6ImRpZDprZXk6c29tZS1yYW5kb20tZGlkLWtleSIsIm5iZiI6MTcwODI3NzgyODc2MiwiY3JlZGVudGlhbCI6eyJfc2QiOlsiSzRrc0gybmU3SFdmRVR6SUZEQmNZZHI4b0Ffc3cwQXk0cXZ2dmJoRjlqRSIsIlJVaWRCLS0xZHBUUEdZS2JiVXRKblZEb3IxNi1WdURHdFE3T2tEa25oUXciLCJzZC1Gd2c1UmhDZ2tOWWt6UktPSVJYUnFqQlBEZU1sZ2V6VC0yNTlDR19ZIiwidXdNcUlneGZGZG55aHhyVzdZYXNSc1JVLXB1dFNhdktOU3RiNWV0ZUJYUSIsInhiaEVQQ053RGhUMGpST2loWmltVnRwVWduRkNtSlBUZzVSNlpabTRQLWsiLCJ5dTRZRmJJOWktZHcySFZPS3ZQU01aWkZPR0hJNUtaYUpNUXlmQmJ3cFNFIl19LCJfc2RfYWxnIjoic2hhLTI1NiIsIl9zZCI6WyI2c0JMdkVmWV9wRURlUEdFc3dnSE1iZ3BDWjJYVHpFZDNfNzRBbXBydlpjIiwiSE5RRFhzanhkWTg1MzBja21TMWRIOEE1MU9TVC1CclpKcktSaWZXeHZmSSIsImhLZnNUdUFnc3JVYmhtQTJCeE81ZlBXdzlLTjFTU05DVkRCNE9XWEdvS1UiXX0.t3ywqNYgweJppEMPkzRc7nMwtiz0HLLJZ5sLtBovGks3zkGbuy2O_MtSowVZN-GQ8RbOoZugFO0LjFQr-oMvCw~WyJBMlpsVGp6S05FZ3dva3REZjZKUmFnIiwiY3JlZGVudGlhbFN1YmplY3QiLCJkaWQ6cGVlcjo0cmVjZWl2ZXItcGVlci1kaWQiXQ~WyI1N2YxMC1WMFh1N1NOSV9DNmVhX1J3IiwiZGF0ZU9mQmlydGgiLCIyMDAwMDEwMSJd~WyIyN1ZUMlowN1R3Z2pMRkNEQjhUYTFnIiwibmFtZSIsIkpvaG4iXQ~WyJyNmJhVmFuM0tVUjR3czRwUzRHTThnIiwibGFzdE5hbWUiLCJEb2UiXQ~eyJ0eXAiOiJrYitqd3QiLCJhbGciOiJFZERTQSJ9.eyJpYXQiOjE3MDgyNzc4Mjg2NjEsImF1ZCI6ImRpZDpwZWVyOjQ6c29tZS12ZXJpZmllciIsIm5vbmNlIjoiZnYtMWtHMDhpSjNOUDRob3E2NVBsUSIsIl9zZF9oYXNoIjoiX1JVZWxtVTVaNDYxeHB4MFhfdHY1M0oyekRXV0NrZmthOW94dkRXVGFBayJ9.clNC-bgPOffqVP1N6cBaxqMUI0sj8K9UonXcD6vfcPI3rzZwmkbIMF_w7WcAGFJ6Xzi14pY7DHAYVrnwu-klCA";
 	let jwtHeader = "";
 	let jwtPayload = "";
 	let disclosures: DisclosureWithDigest[] | undefined;
@@ -20,21 +28,44 @@
 	let jwtPayloadSelection: string;
 	let signatureVerified: SignatureMode;
 	let signatureKeyBindingVerified: SignatureMode;
-	let showKeyBindingSignatureVerified: boolean = false;
+	let showKeyBindingSignatureVerified: boolean = true;
 
 	$: sdJwt = encodedJwt ? decodeSdJwt(encodedJwt) : undefined;
 	$: jwtHeader = sdJwt ? formatJsonObject(sdJwt?.header) : "";
 	$: jwtPayload = sdJwt ? formatJsonObject(sdJwt?.payload) : "";
 	$: alg = sdJwt ? (sdJwt?.payload["_sd_alg"] as string) : undefined;
-	$: encodedJwt
-		? validateJwtSignature(encodedJwt, {})
+	$: encodedJwtWithoutDisclosuresAndHolderBinding = encodedJwt
+		? encodedJwt.split("~").at(0)
+		: undefined;
+	$: encodedJwtWithoutDisclosuresAndHolderBinding
+		? validateJwtSignature(
+				encodedJwtWithoutDisclosuresAndHolderBinding,
+				publicKeyExampleJwt,
+				sdJwt?.header.alg as string,
+			)
 				.then((result) => {
-					signatureVerified = result ? SignatureMode.Verified : SignatureMode.CouldNotVerify;
+					signatureVerified = result ? SignatureMode.Verified : SignatureMode.Invalid;
 				})
 				.catch(() => {
 					signatureVerified = SignatureMode.CouldNotVerify;
 				})
 		: undefined;
+	$: encodedJwtHolderBinding = encodedJwt ? encodedJwt.split("~").at(-1) : undefined;
+	$: encodedJwtHolderBinding
+		? validateJwtSignature(
+				encodedJwtHolderBinding,
+				publicKeyExampleJwt,
+				sdJwt?.keyBinding?.header?.alg as string,
+			)
+				.then((result) => {
+					showKeyBindingSignatureVerified = true;
+					signatureKeyBindingVerified = result ? SignatureMode.Verified : SignatureMode.Invalid;
+				})
+				.catch(() => {
+					showKeyBindingSignatureVerified = true;
+					signatureKeyBindingVerified = SignatureMode.CouldNotVerify;
+				})
+		: (showKeyBindingSignatureVerified = false);
 	$: getDisclosures(sdJwt, alg)
 		.then((result) => {
 			disclosures = result;

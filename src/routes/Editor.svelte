@@ -37,6 +37,7 @@
 			formatOnPaste: true,
 			formatOnType: true,
 			wordWrap: "on",
+			fontFamily: "Fira Mono",
 			// theme: "vs-dark",
 			tabSize: 2,
 			automaticLayout: true,

@@ -6,7 +6,7 @@ import {
 	type VerifyOptions,
 } from "@sd-jwt/core";
 import type { DisclosureWithDigest } from "@sd-jwt/types";
-import * as jose from "jose";
+import { importJWK, jwtVerify, type JWK, compactVerify } from "jose";
 
 export enum SignatureMode {
 	Verified,
@@ -77,15 +77,17 @@ export function decodeSdJwt(encodedJwt: string) {
 
 export async function validateJwtSignature(
 	jwt: string,
-	publicKeyJwk: jose.JWK,
+	publicKeyJwk: JWK,
 	alg?: string,
 ): Promise<boolean> {
 	try {
-		const publicKey = await jose.importJWK(publicKeyJwk, alg);
-		await jose.jwtVerify(jwt, publicKey);
+		const publicKey = await importJWK(publicKeyJwk, alg);
+
+		await compactVerify(jwt, publicKey);
 
 		return true;
 	} catch (error) {
+		console.error(error);
 		console.warn("JWT signature could not be verified");
 
 		return false;
