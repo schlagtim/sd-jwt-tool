@@ -121,7 +121,7 @@
 		flex: 1;
 		display: flex;
 		flex-direction: row;
-		width: 60%;
+		width: 65%;
 	}
 
 	.column {

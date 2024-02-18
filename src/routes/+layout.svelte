@@ -42,7 +42,7 @@
 	.app {
 		display: flex;
 		flex-direction: column;
-		height: 100%;
+		min-height: 100%;
 		width: 100%;
 	}
 
@@ -81,6 +81,10 @@
 	@media screen and (max-width: 600px) {
 		.links {
 			flex-direction: column;
+		}
+
+		.app {
+			min-height: 400%;
 		}
 	}
 </style>
