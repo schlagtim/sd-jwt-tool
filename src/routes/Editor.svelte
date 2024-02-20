@@ -4,7 +4,7 @@
 
 	export let value = "";
 	export let title: string = "Editor";
-	export let language: string = "plaintext";
+	export let language: string = "customSdJwt";
 	export let emitChanges = true;
 	export let flexSize: number = 1;
 	export let selectedText: string = "";
@@ -47,6 +47,44 @@
 				enabled: false,
 			},
 		});
+
+		var myLanguage = {
+			tokenizer: {
+				root: [
+					// Initial JWT
+					[/^[^.]+?\.[^.]+?\.[^.]+?(?=~)~/, "sdJwt"],
+
+					// Disclosure strings
+					[/([^~]+)~/, "disclosureStrings"],
+
+					[/([^.]+?\.[^.]+?\.[^.]+?)$/, "keyBindingJwt"],
+
+					[/(~)/, "tilde"],
+				],
+			},
+		};
+
+		monaco.languages.register({ id: "customSdJwt" });
+
+		monaco.languages.setMonarchTokensProvider("customSdJwt", myLanguage as any);
+
+		monaco.editor.defineTheme("myCustomTheme", {
+			colors: {},
+			base: "vs", // can also be vs-dark or hc-black
+			inherit: true, // inherit from base theme
+			rules: [
+				{ token: "tilde", foreground: "ff00ff" },
+				{ token: "sdJwt", foreground: "a31515" },
+				{
+					token: "disclosureStrings",
+					foreground: "098658",
+					fontStyle: "italic",
+				},
+				{ token: "keyBindingJwt", foreground: "0451a5" },
+			],
+		});
+
+		monaco.editor.setTheme("myCustomTheme");
 
 		const modelEncoded = monaco.editor.createModel(value, language);
 
