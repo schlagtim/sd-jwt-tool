@@ -23,7 +23,7 @@
 			</span>
 			<span>
 				<a
-					href="https://vcstuff.github.io/draft-ietf-oauth-status-list/draft-ietf-oauth-status-list.html"
+					href="https://drafts.oauth.net/draft-ietf-oauth-status-list/draft-ietf-oauth-status-list.html"
 					>OAuth Status List</a
 				>
 				| <a href="https://github.com/vcstuff/draft-ietf-oauth-status-list">(GitHub)</a>

@@ -12,7 +12,7 @@
 	const signatureInvalid = "Invalid Signature";
 </script>
 
-<div class="box" style="--flex-size: {flexSize}">
+<div class="box" style="--flex-size: {flexSize}, height: 100px">
 	<div class="stripes">
 		<h5>{title.toUpperCase()}</h5>
 	</div>
