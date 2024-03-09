@@ -1,15 +1,13 @@
 <script lang="ts">
+	import { getHash } from "$lib/sd-jwt";
 	import { Disclosure } from "@sd-jwt/utils";
 
 	export let disclosures: Array<Disclosure> = [];
 	export let jwtPayloadSelection: { digest: string; disclosure: string };
 
-	const dummyHasher = (data: string, alg: string) => {
-		return new Uint8Array();
-	};
 	const dummyHasherAndAlg = {
-		hasher: dummyHasher,
-		alg: "",
+		hasher: getHash,
+		alg: "sha-256",
 	};
 </script>
 
@@ -22,8 +20,8 @@
 			class="stripes"
 			role="contentinfo"
 			on:mouseover={async () => {
-				jwtPayloadSelection.digest = await disclosure.digest(dummyHasherAndAlg);
 				jwtPayloadSelection.disclosure = disclosure.encode();
+				jwtPayloadSelection.digest = await disclosure.digest(dummyHasherAndAlg);
 			}}
 			on:focus
 		>

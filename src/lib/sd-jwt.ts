@@ -11,7 +11,7 @@ export function splitJwt(text: string): string[] {
 	return text.split(".");
 }
 
-export function decodeBase64URL(text: string): ArrayBuffer {
+export function decodeBase64URL(text: string): Uint8Array {
 	return Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 }
 
@@ -79,33 +79,22 @@ export function getVerifier(alg: string = "ES256", publicKey: Record<string, unk
 		if (!jwk_alg || !publicKey || Object.keys(publicKey).length <= 0) {
 			return false;
 		}
-		crypto.subtle
-			.importKey("jwk", publicKey, { name: name, namedCurve: jwk_alg }, true, ["verify"])
-			.then((pubKey) => {
-				crypto.subtle
-					.verify(
-						{
-							name: name,
-							hash: hash,
-						},
-						pubKey,
-						signature,
-						enc.encode(data),
-					)
-					.then((isValid) => {
-						console.log({
-							publicKey: publicKey,
-							signature: signature,
-							data: data,
-							encodedData: enc.encode(data),
-						});
-						return isValid;
-					});
-			})
-			.catch((err) => {
-				console.error(err);
-			});
-		return false;
+		const pubKey = await crypto.subtle.importKey(
+			"jwk",
+			publicKey,
+			{ name: name, namedCurve: jwk_alg },
+			true,
+			["verify"],
+		);
+		return crypto.subtle.verify(
+			{
+				name: name,
+				hash: hash,
+			},
+			pubKey,
+			signature,
+			enc.encode(data),
+		);
 	};
 }
 
@@ -132,7 +121,7 @@ export function getKBVerifier(data: string, sig: string, payload: JwtPayload) {
 	return verifier(data, sig);
 }
 
-export function getHash(raw: string, alg: string = "sha-256"): Uint8Array {
+export async function getHash(raw: string, alg: string = "sha-256"): Promise<Uint8Array> {
 	let browserAlg: string = "";
 	switch (alg.toLowerCase()) {
 		case "sha-256":
@@ -146,11 +135,5 @@ export function getHash(raw: string, alg: string = "sha-256"): Uint8Array {
 			break;
 	}
 	const enc = new TextEncoder();
-	crypto.subtle
-		.digest(browserAlg, enc.encode(raw))
-		.then((val) => {
-			return new Uint8Array(val);
-		})
-		.catch(() => {});
-	return new Uint8Array(0);
+	return new Uint8Array(await crypto.subtle.digest(browserAlg, enc.encode(raw)));
 }
