@@ -1,6 +1,5 @@
 import { SDJwt } from "@sd-jwt/core";
 import { type JwtPayload } from "@sd-jwt/types";
-import { importJWK, type JWK, compactVerify } from "jose";
 
 export enum SignatureMode {
 	Verified,
@@ -12,9 +11,8 @@ export function splitJwt(text: string): string[] {
 	return text.split(".");
 }
 
-export function decodeBase64URL(text: string): Uint8Array {
-	const txt = atob(text.replace(/-/g, "+").replace(/_/g, "/"));
-	return Uint8Array.from(txt, (c) => c.charCodeAt(0));
+export function decodeBase64URL(text: string): ArrayBuffer {
+	return Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 }
 
 export function encodeBase64(text: string) {
@@ -53,25 +51,6 @@ export function decodeSdJWT(encodedJwt: string): Promise<SDJwt> {
 	return SDJwt.fromEncode(encodedJwt, getHash);
 }
 
-export async function validateJwtSignature(
-	jwt: string,
-	publicKeyJwk: JWK,
-	alg?: string,
-): Promise<boolean> {
-	try {
-		const publicKey = await importJWK(publicKeyJwk, alg);
-
-		await compactVerify(jwt, publicKey);
-
-		return true;
-	} catch (error) {
-		console.error(error);
-		console.warn("JWT signature could not be verified");
-
-		return false;
-	}
-}
-
 export function getVerifier(alg: string = "ES256", publicKey: Record<string, unknown>) {
 	let name: string = "";
 	let hash: AlgorithmIdentifier;
@@ -101,9 +80,7 @@ export function getVerifier(alg: string = "ES256", publicKey: Record<string, unk
 			return false;
 		}
 		crypto.subtle
-			.importKey("jwk", publicKey, { name: name, namedCurve: jwk_alg.toUpperCase() }, true, [
-				"verify",
-			])
+			.importKey("jwk", publicKey, { name: name, namedCurve: jwk_alg }, true, ["verify"])
 			.then((pubKey) => {
 				crypto.subtle
 					.verify(
@@ -116,6 +93,12 @@ export function getVerifier(alg: string = "ES256", publicKey: Record<string, unk
 						enc.encode(data),
 					)
 					.then((isValid) => {
+						console.log({
+							publicKey: publicKey,
+							signature: signature,
+							data: data,
+							encodedData: enc.encode(data),
+						});
 						return isValid;
 					});
 			})

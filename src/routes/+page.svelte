@@ -14,9 +14,11 @@
 
 	// This is not yet fetched and only works for the default example
 	const publicKeyExampleJwt: JWK = {
-		crv: "Ed25519",
-		x: "i_XovdNwR_XoBSkTrZLt9yVQ36KhYbnvbJt0UdrkQTY",
-		kty: "OKP",
+		kty: "EC",
+		crv: "P-256",
+		x: "TCAER19Zvu3OHF4j4W4vfSVoHIP1ILilDls7vCeGemc",
+		y: "ZxjiWWbZMQGHVWKVQ4hbSIirsVfuecCE6t4jT9F2HZQ",
+		alg: "ES256",
 	};
 
 	let encodedJwt: string | undefined =
@@ -60,7 +62,15 @@
 
 			// TODO: Add public key resolution support for issuers
 			const alg = sdJwt.jwt!.header!.alg as string;
-			sdJwt.jwt?.verify(getVerifier(alg, publicKeyExampleJwt));
+			sdJwt.jwt
+				?.verify(getVerifier(alg, publicKeyExampleJwt))
+				.then(() => {
+					signatureVerified = SignatureMode.Verified;
+				})
+				.catch((err) => {
+					signatureVerified = SignatureMode.Invalid;
+					console.error(err);
+				});
 		});
 	} else {
 		jwtHeader = "";
