@@ -7,16 +7,8 @@ export enum SignatureMode {
 	CouldNotVerify,
 }
 
-export function splitJwt(text: string): string[] {
-	return text.split(".");
-}
-
 export function decodeBase64URL(text: string): Uint8Array {
 	return Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
-}
-
-export function encodeBase64(text: string) {
-	return btoa(encodeURIComponent(text));
 }
 
 export function formatJson(text: string) {
