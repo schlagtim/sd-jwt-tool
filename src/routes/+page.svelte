@@ -4,7 +4,11 @@
 	import Editor from "./Editor.svelte";
 	import Signature from "./Signature.svelte";
 	import { Disclosure } from "@sd-jwt/utils";
-	import { ES256, digest, generateSalt } from "@sd-jwt/crypto-browser";
+	import {
+		ES256 as BrowserES256,
+		digest as BrowserDigest,
+		generateSalt as BrowserGenerateSalt,
+	} from "@sd-jwt/crypto-browser";
 	import {
 		ES256 as NodeES256,
 		digest as NodeDigest,
@@ -21,64 +25,12 @@
 	import { onMount } from "svelte";
 	import { SDJwt } from "@sd-jwt/core";
 
+	const ES256 = typeof window !== "undefined" ? BrowserES256 : NodeES256;
+	const digest = typeof window !== "undefined" ? BrowserDigest : NodeDigest;
+	const generateSalt = typeof window !== "undefined" ? BrowserGenerateSalt : NodeGenerateSalt;
+
 	let holderKey: { privateKey: JsonWebKey; publicKey: JsonWebKey };
-	async function getInstance() {
-		/**
-		 * Get the instance based on the environment. Since svelte uses SSR, we need to check if we are in the browser or not.
-		 */
-		if (typeof window !== "undefined") {
-			const { privateKey, publicKey } = await ES256.generateKeyPair();
-			const signer = await ES256.getSigner(privateKey);
-			const verifier = await ES256.getVerifier(publicKey);
-
-			holderKey = await ES256.generateKeyPair();
-			const kbSigner: Signer = async (data: string) =>
-				ES256.getSigner(holderKey.privateKey).then((signer) => signer(data));
-			const kbVerifier: KbVerifier = async (data: string, key: string, payload: JwtPayload) => {
-				if (!payload.cnf) {
-					throw new Error("No cnf in payload");
-				}
-				return ES256.getVerifier(payload.cnf.jwk).then((verifier) => verifier(data, key));
-			};
-
-			// define an instance that can be used for everything. In case of validation, we only need the verifier and hash functions.
-			return new SDJwtVcInstance({
-				signer,
-				verifier,
-				signAlg: "EdDSA",
-				hasher: digest,
-				hashAlg: "SHA-256",
-				saltGenerator: generateSalt,
-				kbSignAlg: "EdDSA",
-				kbSigner,
-				kbVerifier,
-			});
-		} else {
-			const { privateKey, publicKey } = await NodeES256.generateKeyPair();
-			const signer = await NodeES256.getSigner(privateKey);
-			const verifier = await NodeES256.getVerifier(publicKey);
-			holderKey = await ES256.generateKeyPair();
-			const kbSigner: Signer = async (data: string) =>
-				ES256.getSigner(holderKey.privateKey).then((signer) => signer(data));
-			const kbVerifier: KbVerifier = async (data: string, key: string, payload: JwtPayload) => {
-				if (!payload.cnf) {
-					throw new Error("No cnf in payload");
-				}
-				return ES256.getVerifier(payload.cnf.jwk).then((verifier) => verifier(data, key));
-			};
-			return new SDJwtVcInstance({
-				signer,
-				verifier,
-				signAlg: "EdDSA",
-				hasher: NodeDigest,
-				hashAlg: "SHA-256",
-				saltGenerator: NodeGenerateSalt,
-				kbSignAlg: "EdDSA",
-				kbSigner,
-				kbVerifier,
-			});
-		}
-	}
+	let issuerKey: { privateKey: JsonWebKey; publicKey: JsonWebKey };
 	let jwtHeader = "";
 	let jwtPayload = "";
 	let disclosures: Array<Disclosure> | undefined;
@@ -90,7 +42,6 @@
 	let signatureKeyBindingVerified: SignatureMode;
 	let showKeyBindingSignatureVerified: boolean = true;
 	let encodedJwt: string;
-	let instance: SDJwtVcInstance;
 	/**
 	 * Set the values to create a default SD-JWT-VC
 	 */
@@ -107,7 +58,21 @@
 	const requiredClaims = ["firstname"];
 
 	onMount(async () => {
-		instance = await getInstance();
+		issuerKey = await ES256.generateKeyPair();
+		const signer = await ES256.getSigner(issuerKey.privateKey);
+		holderKey = await ES256.generateKeyPair();
+		const kbSigner: Signer = async (data: string) =>
+			ES256.getSigner(holderKey.privateKey).then((signer) => signer(data));
+		// define an instance that can be used for everything.
+		const instance = new SDJwtVcInstance({
+			signer,
+			signAlg: "EdDSA",
+			hasher: digest,
+			hashAlg: "SHA-256",
+			saltGenerator: generateSalt,
+			kbSignAlg: "EdDSA",
+			kbSigner,
+		});
 		encodedJwt = await instance.issue(
 			{
 				...claims,
@@ -131,7 +96,7 @@
 	const hasher = typeof window !== "undefined" ? digest : NodeDigest;
 	$: sdJwt = encodedJwt ? SDJwt.fromEncode(encodedJwt, hasher) : undefined;
 	$: if (sdJwt) {
-		sdJwt?.then((sdJwt) => {
+		sdJwt?.then(async (sdJwt) => {
 			jwtHeader = formatJsonObject(sdJwt.jwt?.header);
 			jwtPayload = formatJsonObject(sdJwt.jwt?.payload);
 			disclosures = sdJwt.disclosures;
@@ -140,6 +105,26 @@
 			} else {
 				showKeyBindingSignatureVerified = false;
 			}
+			const es = typeof window !== "undefined" ? ES256 : NodeES256;
+			const verifier = await es.getVerifier(issuerKey.publicKey);
+			/**
+			 * Extract the key from the cnf, only supported embedded jwk for now.
+			 */
+			const kbVerifier: KbVerifier = async (data: string, key: string, payload: JwtPayload) => {
+				if (!payload.cnf) {
+					throw new Error("No cnf in payload");
+				}
+				return es.getVerifier(payload.cnf.jwk).then((verifier) => verifier(data, key));
+			};
+
+			const instance = new SDJwtVcInstance({
+				verifier,
+				hasher: digest,
+				hashAlg: "SHA-256",
+				saltGenerator: generateSalt,
+				kbVerifier,
+			});
+
 			instance
 				.verify(encodedJwt, requiredClaims, false)
 				.then(() => {
