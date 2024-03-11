@@ -11,7 +11,13 @@
 		generateSalt as NodeGenerateSalt,
 	} from "@sd-jwt/crypto-nodejs";
 	import { SDJwtVcInstance } from "@sd-jwt/sd-jwt-vc";
-	import type { DisclosureFrame, PresentationFrame, Signer, KbVerifier } from "@sd-jwt/types";
+	import type {
+		DisclosureFrame,
+		PresentationFrame,
+		Signer,
+		KbVerifier,
+		JwtPayload,
+	} from "@sd-jwt/types";
 	import { onMount } from "svelte";
 	import { SDJwt } from "@sd-jwt/core";
 
@@ -28,8 +34,12 @@
 			holderKey = await ES256.generateKeyPair();
 			const kbSigner: Signer = async (data: string) =>
 				ES256.getSigner(holderKey.privateKey).then((signer) => signer(data));
-			const kbVerifier: KbVerifier = async (data: string, key: string) =>
-				ES256.getVerifier(holderKey.publicKey).then((verifier) => verifier(data, key));
+			const kbVerifier: KbVerifier = async (data: string, key: string, payload: JwtPayload) => {
+				if (!payload.cnf) {
+					throw new Error("No cnf in payload");
+				}
+				return ES256.getVerifier(payload.cnf.jwk).then((verifier) => verifier(data, key));
+			};
 
 			// define an instance that can be used for everything. In case of validation, we only need the verifier and hash functions.
 			return new SDJwtVcInstance({
@@ -50,8 +60,12 @@
 			holderKey = await ES256.generateKeyPair();
 			const kbSigner: Signer = async (data: string) =>
 				ES256.getSigner(holderKey.privateKey).then((signer) => signer(data));
-			const kbVerifier: KbVerifier = async (data: string, key: string) =>
-				ES256.getVerifier(holderKey.publicKey).then((verifier) => verifier(data, key));
+			const kbVerifier: KbVerifier = async (data: string, key: string, payload: JwtPayload) => {
+				if (!payload.cnf) {
+					throw new Error("No cnf in payload");
+				}
+				return ES256.getVerifier(payload.cnf.jwk).then((verifier) => verifier(data, key));
+			};
 			return new SDJwtVcInstance({
 				signer,
 				verifier,
