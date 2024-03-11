@@ -33,45 +33,51 @@
 	let signatureVerified: SignatureMode;
 	let signatureKeyBindingVerified: SignatureMode;
 	let showKeyBindingSignatureVerified: boolean = true;
+	let validSDJWT: boolean = true;
 	$: sdJwt = encodedJwt ? decodeSdJWT(encodedJwt) : undefined;
 	$: if (sdJwt) {
-		sdJwt?.then((sdJwt) => {
-			console.log(sdJwt);
+		sdJwt
+			?.then((sdJwt) => {
+				validSDJWT = true;
+				console.log(sdJwt);
 
-			jwtHeader = formatJsonObject(sdJwt.jwt?.header);
-			jwtPayload = formatJsonObject(sdJwt.jwt?.payload);
-			disclosures = sdJwt.disclosures;
+				jwtHeader = formatJsonObject(sdJwt.jwt?.header);
+				jwtPayload = formatJsonObject(sdJwt.jwt?.payload);
+				disclosures = sdJwt.disclosures;
 
-			if (sdJwt.kbJwt && sdJwt.jwt && sdJwt.jwt.payload && sdJwt.jwt.payload.cnf) {
-				showKeyBindingSignatureVerified = true;
-			} else {
-				showKeyBindingSignatureVerified = false;
-			}
-			sdJwt.kbJwt
-				?.verifyKB({
-					verifier: getKBVerifier,
-					payload: sdJwt.jwt?.payload as JWTPayload,
-				})
-				.then(() => {
-					signatureKeyBindingVerified = SignatureMode.Verified;
-				})
-				.catch((err) => {
-					signatureKeyBindingVerified = SignatureMode.Invalid;
-					console.error(err);
-				});
+				if (sdJwt.kbJwt && sdJwt.jwt && sdJwt.jwt.payload && sdJwt.jwt.payload.cnf) {
+					showKeyBindingSignatureVerified = true;
+				} else {
+					showKeyBindingSignatureVerified = false;
+				}
+				sdJwt.kbJwt
+					?.verifyKB({
+						verifier: getKBVerifier,
+						payload: sdJwt.jwt?.payload as JWTPayload,
+					})
+					.then(() => {
+						signatureKeyBindingVerified = SignatureMode.Verified;
+					})
+					.catch(() => {
+						signatureKeyBindingVerified = SignatureMode.Invalid;
+					});
 
-			// TODO: Add public key resolution support for issuers
-			const alg = sdJwt.jwt!.header!.alg as string;
-			sdJwt.jwt
-				?.verify(getVerifier(alg, publicKeyExampleJwt))
-				.then(() => {
-					signatureVerified = SignatureMode.Verified;
-				})
-				.catch((err) => {
-					signatureVerified = SignatureMode.Invalid;
-					console.error(err);
-				});
-		});
+				// TODO: Add public key resolution support for issuers
+				const alg = sdJwt.jwt!.header!.alg as string;
+				sdJwt.jwt
+					?.verify(getVerifier(alg, publicKeyExampleJwt))
+					.then(() => {
+						signatureVerified = SignatureMode.Verified;
+					})
+					.catch(() => {
+						signatureVerified = SignatureMode.Invalid;
+					});
+			})
+			.catch(() => {
+				validSDJWT = false;
+				signatureVerified = SignatureMode.Invalid;
+				signatureKeyBindingVerified = SignatureMode.Invalid;
+			});
 	} else {
 		jwtHeader = "";
 		jwtPayload = "";
@@ -97,6 +103,7 @@
 				jwtSignature={signatureVerified}
 				keyBindingSignature={signatureKeyBindingVerified}
 				showKeyBindingSignature={showKeyBindingSignatureVerified}
+				{validSDJWT}
 			></Signature>
 		</div>
 		<div class="column" style="border-top: 0;">

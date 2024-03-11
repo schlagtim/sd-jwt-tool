@@ -66,27 +66,31 @@ export function getVerifier(alg: string = "ES256", publicKey: Record<string, unk
 	}
 	const enc = new TextEncoder();
 	return async (data: string, sigbase64: string) => {
-		const signature = decodeBase64URL(sigbase64);
-		// abort validation if inputs are wrong
-		if (!jwk_alg || !publicKey || Object.keys(publicKey).length <= 0) {
+		try {
+			const signature = decodeBase64URL(sigbase64);
+			// abort validation if inputs are wrong
+			if (!jwk_alg || !publicKey || Object.keys(publicKey).length <= 0) {
+				return false;
+			}
+			const pubKey = await crypto.subtle.importKey(
+				"jwk",
+				publicKey,
+				{ name: sig_name, namedCurve: jwk_alg },
+				true,
+				["verify"],
+			);
+			return crypto.subtle.verify(
+				{
+					name: sig_name,
+					hash: hash,
+				},
+				pubKey,
+				signature,
+				enc.encode(data),
+			);
+		} catch (_) {
 			return false;
 		}
-		const pubKey = await crypto.subtle.importKey(
-			"jwk",
-			publicKey,
-			{ name: sig_name, namedCurve: jwk_alg },
-			true,
-			["verify"],
-		);
-		return crypto.subtle.verify(
-			{
-				name: sig_name,
-				hash: hash,
-			},
-			pubKey,
-			signature,
-			enc.encode(data),
-		);
 	};
 }
 
