@@ -46,7 +46,7 @@
 	"type": "module",
 	"dependencies": {
 		"@fontsource/fira-mono": "^5.0.8",
-		"@sd-jwt/sd-jwt-vc": "^0.4",
+		"@sd-jwt/sd-jwt-vc": "^0.5",
 		"jose": "^5.2.2",
 		"monaco-editor": "^0.45.0"
 	}
