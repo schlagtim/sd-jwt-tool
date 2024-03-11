@@ -14,7 +14,7 @@
 
 	// This is not yet fetched and only works for the default example
 
-	const publicKeyExampleJwt: JWK = {
+	const publicKeyJWK: JWK = {
 		kty: "EC",
 		crv: "P-256",
 		x: "b28d4MwZMjw8-00CG4xfnn9SLMVMM19SlqZpVb_uNtQ",
@@ -25,6 +25,8 @@
 
 	let jwtHeader = "";
 	let jwtPayload = "";
+	let publicKey = formatJsonObject(publicKeyJWK);
+	let key: any;
 	let disclosures: Array<Disclosure> | undefined;
 	let jwtPayloadSelection = {
 		digest: "",
@@ -35,11 +37,11 @@
 	let showKeyBindingSignatureVerified: boolean = true;
 	let validSDJWT: boolean = true;
 	$: sdJwt = encodedJwt ? decodeSdJWT(encodedJwt) : undefined;
+	$: key = JSON.parse(publicKey);
 	$: if (sdJwt) {
 		sdJwt
 			?.then((sdJwt) => {
 				validSDJWT = true;
-				console.log(sdJwt);
 
 				jwtHeader = formatJsonObject(sdJwt.jwt?.header);
 				jwtPayload = formatJsonObject(sdJwt.jwt?.payload);
@@ -65,7 +67,7 @@
 				// TODO: Add public key resolution support for issuers
 				const alg = sdJwt.jwt!.header!.alg as string;
 				sdJwt.jwt
-					?.verify(getVerifier(alg, publicKeyExampleJwt))
+					?.verify(getVerifier(alg, key as Record<string, unknown>))
 					.then(() => {
 						signatureVerified = SignatureMode.Verified;
 					})
@@ -119,8 +121,16 @@
 				readOnly={true}
 			></Editor>
 		</div>
-		<div class="column" style="flex: 1;">
+		<div class="column" style="flex: 1">
 			<Disclosures bind:jwtPayloadSelection {disclosures}></Disclosures>
+			<!-- TODO: move down -->
+			<Editor
+				title="PublicKey"
+				language="json"
+				bind:value={publicKey}
+				emitChanges={true}
+				readOnly={false}
+			></Editor>
 		</div>
 	</div>
 </section>
