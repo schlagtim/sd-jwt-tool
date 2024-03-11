@@ -66,7 +66,7 @@
 		// define an instance that can be used for everything.
 		const instance = new SDJwtVcInstance({
 			signer,
-			signAlg: "EdDSA",
+			signAlg: "ES256",
 			hasher: digest,
 			hashAlg: "SHA-256",
 			saltGenerator: generateSalt,
@@ -105,8 +105,7 @@
 			} else {
 				showKeyBindingSignatureVerified = false;
 			}
-			const es = typeof window !== "undefined" ? ES256 : NodeES256;
-			const verifier = await es.getVerifier(issuerKey.publicKey);
+			const verifier = await ES256.getVerifier(issuerKey.publicKey);
 			/**
 			 * Extract the key from the cnf, only supported embedded jwk for now.
 			 */
@@ -114,7 +113,7 @@
 				if (!payload.cnf) {
 					throw new Error("No cnf in payload");
 				}
-				return es.getVerifier(payload.cnf.jwk).then((verifier) => verifier(data, key));
+				return ES256.getVerifier(payload.cnf.jwk).then((verifier) => verifier(data, key));
 			};
 
 			const instance = new SDJwtVcInstance({
@@ -124,7 +123,6 @@
 				saltGenerator: generateSalt,
 				kbVerifier,
 			});
-
 			instance
 				.verify(encodedJwt, requiredClaims, false)
 				.then(() => {
