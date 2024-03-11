@@ -52,22 +52,22 @@ export function decodeSdJWT(encodedJwt: string): Promise<SDJwt> {
 }
 
 export function getVerifier(alg: string = "ES256", publicKey: Record<string, unknown>) {
-	let name: string = "";
+	let sig_name: string = "";
 	let hash: AlgorithmIdentifier;
 	let jwk_alg: string = "";
 	switch (alg.toLowerCase()) {
 		case "es256":
-			name = "ECDSA";
+			sig_name = "ECDSA";
 			hash = { name: "SHA-256" };
 			jwk_alg = "P-256";
 			break;
-		case "rs384":
-			name = "ECDSA";
+		case "es384":
+			sig_name = "ECDSA";
 			hash = { name: "SHA-384" };
 			jwk_alg = "P-384";
 			break;
 		case "es512":
-			name = "ECDSA";
+			sig_name = "ECDSA";
 			hash = { name: "SHA-512" };
 			jwk_alg = "P-512";
 			break;
@@ -82,13 +82,13 @@ export function getVerifier(alg: string = "ES256", publicKey: Record<string, unk
 		const pubKey = await crypto.subtle.importKey(
 			"jwk",
 			publicKey,
-			{ name: name, namedCurve: jwk_alg },
+			{ name: sig_name, namedCurve: jwk_alg },
 			true,
 			["verify"],
 		);
 		return crypto.subtle.verify(
 			{
-				name: name,
+				name: sig_name,
 				hash: hash,
 			},
 			pubKey,

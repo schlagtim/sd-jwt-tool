@@ -8,6 +8,7 @@
 	export let emitChanges = true;
 	export let flexSize: number = 1;
 	export let selectedText: string = "";
+	export let readOnly: boolean = false;
 
 	let monaco: typeof Monaco;
 	let editorElement: HTMLElement;
@@ -41,7 +42,7 @@
 			// theme: "vs-dark",
 			tabSize: 2,
 			automaticLayout: true,
-			readOnly: false,
+			readOnly: readOnly,
 			linkedEditing: true,
 			minimap: {
 				enabled: false,
