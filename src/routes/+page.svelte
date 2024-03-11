@@ -1,28 +1,70 @@
 <script lang="ts">
-	import {
-		SignatureMode,
-		decodeSdJWT,
-		formatJsonObject,
-		getKBVerifier,
-		getVerifier,
-	} from "$lib/sd-jwt";
+	import { SignatureMode, formatJsonObject } from "$lib/sd-jwt";
 	import Disclosures from "./Disclosures.svelte";
 	import Editor from "./Editor.svelte";
 	import Signature from "./Signature.svelte";
-	import type { JWK, JWTPayload } from "jose";
 	import { Disclosure } from "@sd-jwt/utils";
+	import { ES256, digest, generateSalt } from "@sd-jwt/crypto-browser";
+	import {
+		ES256 as NodeES256,
+		digest as NodeDigest,
+		generateSalt as NodeGenerateSalt,
+	} from "@sd-jwt/crypto-nodejs";
+	import { SDJwtVcInstance } from "@sd-jwt/sd-jwt-vc";
+	import type { DisclosureFrame, PresentationFrame, Signer, KbVerifier } from "@sd-jwt/types";
+	import { onMount } from "svelte";
+	import { SDJwt } from "@sd-jwt/core";
 
-	// This is not yet fetched and only works for the default example
-	const publicKeyExampleJwt: JWK = {
-		kty: "EC",
-		crv: "P-256",
-		x: "TCAER19Zvu3OHF4j4W4vfSVoHIP1ILilDls7vCeGemc",
-		y: "ZxjiWWbZMQGHVWKVQ4hbSIirsVfuecCE6t4jT9F2HZQ",
-		alg: "ES256",
-	};
+	let holderKey: { privateKey: JsonWebKey; publicKey: JsonWebKey };
+	async function getInstance() {
+		/**
+		 * Get the instance based on the environment. Since svelte uses SSR, we need to check if we are in the browser or not.
+		 */
+		if (typeof window !== "undefined") {
+			const { privateKey, publicKey } = await ES256.generateKeyPair();
+			const signer = await ES256.getSigner(privateKey);
+			const verifier = await ES256.getVerifier(publicKey);
 
-	let encodedJwt: string | undefined =
-		"eyJhbGciOiAiRVMyNTYiLCAidHlwIjogInZjK3NkLWp3dCIsICJraWQiOiAiZG9jLXNpZ25lci0wNS0yNS0yMDIyIn0.eyJfc2QiOiBbIjA5dktySk1PbHlUV00wc2pwdV9wZE9CVkJRMk0xeTNLaHBINTE1blhrcFkiLCAiMnJzakdiYUMwa3k4bVQwcEpyUGlvV1RxMF9kYXcxc1g3NnBvVWxnQ3diSSIsICJFa084ZGhXMGRIRUpidlVIbEVfVkNldUM5dVJFTE9pZUxaaGg3WGJVVHRBIiwgIklsRHpJS2VpWmREd3BxcEs2WmZieXBoRnZ6NUZnbldhLXNONndxUVhDaXciLCAiSnpZakg0c3ZsaUgwUjNQeUVNZmVadTZKdDY5dTVxZWhabzdGN0VQWWxTRSIsICJQb3JGYnBLdVZ1Nnh5bUphZ3ZrRnNGWEFiUm9jMkpHbEFVQTJCQTRvN2NJIiwgIlRHZjRvTGJnd2Q1SlFhSHlLVlFaVTlVZEdFMHc1cnREc3JaemZVYW9tTG8iLCAiamRyVEU4WWNiWTRFaWZ1Z2loaUFlX0JQZWt4SlFaSUNlaVVRd1k5UXF4SSIsICJqc3U5eVZ1bHdRUWxoRmxNXzNKbHpNYVNGemdsaFFHMERwZmF5UXdMVUs0Il0sICJpc3MiOiAiaHR0cHM6Ly9leGFtcGxlLmNvbS9pc3N1ZXIiLCAiaWF0IjogMTY4MzAwMDAwMCwgImV4cCI6IDE4ODMwMDAwMDAsICJ2Y3QiOiAiaHR0cHM6Ly9jcmVkZW50aWFscy5leGFtcGxlLmNvbS9pZGVudGl0eV9jcmVkZW50aWFsIiwgIl9zZF9hbGciOiAic2hhLTI1NiIsICJjbmYiOiB7Imp3ayI6IHsia3R5IjogIkVDIiwgImNydiI6ICJQLTI1NiIsICJ4IjogIlRDQUVSMTladnUzT0hGNGo0VzR2ZlNWb0hJUDFJTGlsRGxzN3ZDZUdlbWMiLCAieSI6ICJaeGppV1diWk1RR0hWV0tWUTRoYlNJaXJzVmZ1ZWNDRTZ0NGpUOUYySFpRIn19fQ.QXgzrePAdq_WZVGCwDxP-l8h0iyckrHBNidxVqGtKJ0LMzObqgaXUD1cgGEf7d9TexPkBcgQYqjuzlfbeCxxuA~WyJRZ19PNjR6cUF4ZTQxMmExMDhpcm9BIiwgImFkZHJlc3MiLCB7InN0cmVldF9hZGRyZXNzIjogIjEyMyBNYWluIFN0IiwgImxvY2FsaXR5IjogIkFueXRvd24iLCAicmVnaW9uIjogIkFueXN0YXRlIiwgImNvdW50cnkiOiAiVVMifV0~WyI2SWo3dE0tYTVpVlBHYm9TNXRtdlZBIiwgImVtYWlsIiwgImpvaG5kb2VAZXhhbXBsZS5jb20iXQ~WyJlbHVWNU9nM2dTTklJOEVZbnN4QV9BIiwgImZhbWlseV9uYW1lIiwgIkRvZSJd~WyIyR0xDNDJzS1F2ZUNmR2ZyeU5STjl3IiwgImdpdmVuX25hbWUiLCAiSm9obiJd~eyJhbGciOiAiRVMyNTYiLCAidHlwIjogImtiK2p3dCJ9.eyJub25jZSI6ICIxMjM0NTY3ODkwIiwgImF1ZCI6ICJodHRwczovL2V4YW1wbGUuY29tL3ZlcmlmaWVyIiwgImlhdCI6IDE3MDk5OTYxODUsICJzZF9oYXNoIjogIjc4cFFEazJOblNEM1dKQm5SN015aWpmeUVqcGJ5a01yRnlpb2ZYSjlsN0kifQ.7k4goAlxM4a3tHnvCBCe70j_I-BCwtzhBRXQNk9cWJnQWxxt2kIqCyzcwzzUc0gTwtbGWVQoeWCiL5K6y3a4VQ";
+			holderKey = await ES256.generateKeyPair();
+			const kbSigner: Signer = async (data: string) =>
+				ES256.getSigner(holderKey.privateKey).then((signer) => signer(data));
+			const kbVerifier: KbVerifier = async (data: string, key: string) =>
+				ES256.getVerifier(holderKey.publicKey).then((verifier) => verifier(data, key));
+
+			// define an instance that can be used for everything. In case of validation, we only need the verifier and hash functions.
+			return new SDJwtVcInstance({
+				signer,
+				verifier,
+				signAlg: "EdDSA",
+				hasher: digest,
+				hashAlg: "SHA-256",
+				saltGenerator: generateSalt,
+				kbSignAlg: "EdDSA",
+				kbSigner,
+				kbVerifier,
+			});
+		} else {
+			const { privateKey, publicKey } = await NodeES256.generateKeyPair();
+			const signer = await NodeES256.getSigner(privateKey);
+			const verifier = await NodeES256.getVerifier(publicKey);
+			holderKey = await ES256.generateKeyPair();
+			const kbSigner: Signer = async (data: string) =>
+				ES256.getSigner(holderKey.privateKey).then((signer) => signer(data));
+			const kbVerifier: KbVerifier = async (data: string, key: string) =>
+				ES256.getVerifier(holderKey.publicKey).then((verifier) => verifier(data, key));
+			return new SDJwtVcInstance({
+				signer,
+				verifier,
+				signAlg: "EdDSA",
+				hasher: NodeDigest,
+				hashAlg: "SHA-256",
+				saltGenerator: NodeGenerateSalt,
+				kbSignAlg: "EdDSA",
+				kbSigner,
+				kbVerifier,
+			});
+		}
+	}
 	let jwtHeader = "";
 	let jwtPayload = "";
 	let disclosures: Array<Disclosure> | undefined;
@@ -33,37 +75,59 @@
 	let signatureVerified: SignatureMode;
 	let signatureKeyBindingVerified: SignatureMode;
 	let showKeyBindingSignatureVerified: boolean = true;
-	$: sdJwt = encodedJwt ? decodeSdJWT(encodedJwt) : undefined;
+	let encodedJwt: string;
+	let instance: SDJwtVcInstance;
+	/**
+	 * Set the values to create a default SD-JWT-VC
+	 */
+	const claims = {
+		firstname: "Jon",
+		lastname: "Doe",
+	};
+	const disclosureFrame: DisclosureFrame<typeof claims> = {
+		_sd: ["firstname", "lastname"],
+	};
+	const presentationFrame: PresentationFrame<typeof claims> = {
+		firstname: true,
+	};
+	const requiredClaims = ["firstname"];
+
+	onMount(async () => {
+		instance = await getInstance();
+		encodedJwt = await instance.issue(
+			{
+				...claims,
+				iss: "issuer",
+				iat: new Date().getTime() / 1000,
+				vct: "",
+				cnf: { jwk: holderKey.publicKey },
+			},
+			disclosureFrame,
+		);
+		encodedJwt = await instance.present(encodedJwt, presentationFrame, {
+			kb: {
+				payload: {
+					aud: "1",
+					iat: 1,
+					nonce: "342",
+				},
+			},
+		});
+	});
+	const hasher = typeof window !== "undefined" ? digest : NodeDigest;
+	$: sdJwt = encodedJwt ? SDJwt.fromEncode(encodedJwt, hasher) : undefined;
 	$: if (sdJwt) {
 		sdJwt?.then((sdJwt) => {
-			console.log(sdJwt);
-
 			jwtHeader = formatJsonObject(sdJwt.jwt?.header);
 			jwtPayload = formatJsonObject(sdJwt.jwt?.payload);
 			disclosures = sdJwt.disclosures;
-
 			if (sdJwt.kbJwt && sdJwt.jwt && sdJwt.jwt.payload && sdJwt.jwt.payload.cnf) {
 				showKeyBindingSignatureVerified = true;
 			} else {
 				showKeyBindingSignatureVerified = false;
 			}
-			sdJwt.kbJwt
-				?.verifyKB({
-					verifier: getKBVerifier,
-					payload: sdJwt.jwt?.payload as JWTPayload,
-				})
-				.then(() => {
-					signatureKeyBindingVerified = SignatureMode.Verified;
-				})
-				.catch((err) => {
-					signatureKeyBindingVerified = SignatureMode.Invalid;
-					console.error(err);
-				});
-
-			// TODO: Add public key resolution support for issuers
-			const alg = sdJwt.jwt!.header!.alg as string;
-			sdJwt.jwt
-				?.verify(getVerifier(alg, publicKeyExampleJwt))
+			instance
+				.verify(encodedJwt, requiredClaims, false)
 				.then(() => {
 					signatureVerified = SignatureMode.Verified;
 				})
@@ -71,6 +135,17 @@
 					signatureVerified = SignatureMode.Invalid;
 					console.error(err);
 				});
+			if (sdJwt.kbJwt) {
+				instance
+					.verify(encodedJwt, requiredClaims, true)
+					.then(() => {
+						signatureKeyBindingVerified = SignatureMode.Verified;
+					})
+					.catch((err) => {
+						signatureKeyBindingVerified = SignatureMode.Invalid;
+						console.error(err);
+					});
+			}
 		});
 	} else {
 		jwtHeader = "";
