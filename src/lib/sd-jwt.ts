@@ -1,12 +1,5 @@
-import {
-	SdJwt,
-	type HasherAndAlgorithm,
-	HasherAlgorithm,
-	type Verifier,
-	type VerifyOptions,
-} from "@sd-jwt/core";
-import type { DisclosureWithDigest } from "@sd-jwt/types";
-import { importJWK, jwtVerify, type JWK, compactVerify } from "jose";
+import { SDJwt } from "@sd-jwt/core";
+import { type JwtPayload } from "@sd-jwt/types";
 
 export enum SignatureMode {
 	Verified,
@@ -14,29 +7,8 @@ export enum SignatureMode {
 	CouldNotVerify,
 }
 
-export type DisclosureType = {
-	salt: string;
-	key?: string;
-	value: any;
-	digest: string;
-};
-
-export function splitJwt(text: string): string[] {
-	return text.split(".");
-}
-
-export function decodeBase64(text: string) {
-	let result: string = "";
-	try {
-		result = atob(text);
-	} catch (error) {
-		console.warn("Not correctly encoded", error);
-	}
-	return result;
-}
-
-export function encodeBase64(text: string) {
-	return btoa(encodeURIComponent(text));
+export function decodeBase64URL(text: string): Uint8Array {
+	return Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 }
 
 export function formatJson(text: string) {
@@ -67,49 +39,85 @@ export function formatJsonObject(json: unknown) {
 	return result;
 }
 
-export function decodeSdJwt(encodedJwt: string) {
-	try {
-		return SdJwt.fromCompact(encodedJwt);
-	} catch (error) {
-		return undefined;
-	}
+export function decodeSdJWT(encodedJwt: string): Promise<SDJwt> {
+	return SDJwt.fromEncode(encodedJwt, getHash);
 }
 
-export async function validateJwtSignature(
-	jwt: string,
-	publicKeyJwk: JWK,
-	alg?: string,
-): Promise<boolean> {
-	try {
-		const publicKey = await importJWK(publicKeyJwk, alg);
-
-		await compactVerify(jwt, publicKey);
-
-		return true;
-	} catch (error) {
-		console.error(error);
-		console.warn("JWT signature could not be verified");
-
-		return false;
+export function getVerifier(alg: string = "ES256", publicKey: Record<string, unknown>) {
+	let sig_name: string = "";
+	let hash: AlgorithmIdentifier;
+	let jwk_alg: string = "";
+	switch (alg.toLowerCase()) {
+		case "es256":
+			sig_name = "ECDSA";
+			hash = { name: "SHA-256" };
+			jwk_alg = "P-256";
+			break;
+		case "es384":
+			sig_name = "ECDSA";
+			hash = { name: "SHA-384" };
+			jwk_alg = "P-384";
+			break;
+		case "es512":
+			sig_name = "ECDSA";
+			hash = { name: "SHA-512" };
+			jwk_alg = "P-512";
+			break;
 	}
+	const enc = new TextEncoder();
+	return async (data: string, sigbase64: string) => {
+		try {
+			const signature = decodeBase64URL(sigbase64);
+			// abort validation if inputs are wrong
+			if (!jwk_alg || !publicKey || Object.keys(publicKey).length <= 0) {
+				return false;
+			}
+			const pubKey = await crypto.subtle.importKey(
+				"jwk",
+				publicKey,
+				{ name: sig_name, namedCurve: jwk_alg },
+				true,
+				["verify"],
+			);
+			return crypto.subtle.verify(
+				{
+					name: sig_name,
+					hash: hash,
+				},
+				pubKey,
+				signature,
+				enc.encode(data),
+			);
+		} catch (_) {
+			return false;
+		}
+	};
 }
 
-export async function getDisclosures(
-	sdJwt?: SdJwt,
-	alg?: string,
-): Promise<DisclosureWithDigest[] | undefined> {
-	try {
-		const disclosures = await sdJwt?.withHasher(provideHasher(alg)).disclosuresWithDigest();
-
-		return disclosures ? disclosures.map((disclosure) => disclosure.asJson()) : [];
-	} catch (error) {
-		console.warn((error as Error).message);
-
-		return [];
+// TODO: how do we properly get alg if we don't get the header?
+export function getKBVerifier(data: string, sig: string, payload: JwtPayload) {
+	let alg = payload.cnf ? (payload.cnf.jwk.alg ? payload.cnf.jwk.alg : "") : "";
+	if (!alg) {
+		switch (payload.cnf?.jwk.crv?.toUpperCase()) {
+			case "P-256":
+				alg = "ES256";
+				break;
+			case "P-358":
+				alg = "ES358";
+				break;
+			case "P-512":
+				alg = "ES512";
+				break;
+		}
 	}
+	const verifier = getVerifier(
+		alg,
+		payload.cnf ? (payload.cnf.jwk as Record<string, unknown>) : {},
+	);
+	return verifier(data, sig);
 }
 
-export function provideHasher(alg: string = "sha-256") {
+export async function getHash(raw: string, alg: string = "sha-256"): Promise<Uint8Array> {
 	let browserAlg: string = "";
 	switch (alg.toLowerCase()) {
 		case "sha-256":
@@ -122,18 +130,6 @@ export function provideHasher(alg: string = "sha-256") {
 			browserAlg = "SHA-512";
 			break;
 	}
-	var enc = new TextEncoder();
-	const hasherAndAlgorithm: HasherAndAlgorithm = {
-		hasher: (input: string) =>
-			crypto.subtle
-				.digest(browserAlg, enc.encode(input))
-				.then((val) => {
-					return new Uint8Array(val);
-				})
-				.catch((err) => {
-					return new Uint8Array(0);
-				}),
-		algorithm: alg,
-	};
-	return hasherAndAlgorithm;
+	const enc = new TextEncoder();
+	return new Uint8Array(await crypto.subtle.digest(browserAlg, enc.encode(raw)));
 }

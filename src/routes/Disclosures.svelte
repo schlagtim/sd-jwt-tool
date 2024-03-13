@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { DisclosureWithDigest } from "@sd-jwt/types";
+	import { Disclosure } from "@sd-jwt/utils";
 
-	export let disclosures: DisclosureWithDigest[] = [];
-	export let jwtPayloadSelection: string = "";
+	export let disclosures: Array<Disclosure> = [];
+	export let jwtPayloadSelection: { digest: string; disclosure: string };
 </script>
 
 <div class="box">
@@ -13,9 +13,9 @@
 		<div
 			class="stripes"
 			role="contentinfo"
-			on:mouseover={() => {
-				jwtPayloadSelection = disclosure.digest ? disclosure.digest : "";
-				console.log("Hovering ", jwtPayloadSelection);
+			on:mouseover={async () => {
+				jwtPayloadSelection.disclosure = disclosure.encode();
+				jwtPayloadSelection.digest = disclosure._digest ? disclosure._digest : "";
 			}}
 			on:focus
 		>
